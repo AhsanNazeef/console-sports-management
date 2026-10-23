@@ -1,14 +1,18 @@
 import { Type } from '@angular/core';
 import { Routes } from '@angular/router';
+import { authRoutes } from './auth/auth.routes';
 import { ShellComponent } from './common/components/shell/shell.component';
+import { authGuard } from './core/auth/guards/auth.guard';
 
 const comingSoon = (): Promise<Type<unknown>> =>
   import('./common/components/coming-soon/coming-soon.component').then((m) => m.ComingSoonPage);
 
 export const routes: Routes = [
+  ...authRoutes,
   {
     path: '',
     component: ShellComponent,
+    canActivate: [authGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', title: 'Dashboard', loadComponent: comingSoon },

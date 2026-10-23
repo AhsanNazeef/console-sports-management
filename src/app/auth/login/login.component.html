@@ -1,0 +1,47 @@
+<main class="login-page">
+  <div class="login-page__card">
+    <div class="login-page__logo">
+      <img src="assets/images/logo_admin_console.svg" width="142" height="34" alt="Buzzer Admin Console" />
+    </div>
+    <h1 class="login-page__title">Log in</h1>
+
+    <form class="login-page__form" novalidate #loginForm="ngForm" (ngSubmit)="onSubmit(loginForm)">
+      <div class="login-page__fields">
+        <label class="login-page__label" for="login-email">Email address</label>
+        <app-text-input
+          inputId="login-email"
+          name="email"
+          type="email"
+          placeholder="Email Address*"
+          autocomplete="username"
+          required
+          email
+          [error]="fieldError(emailModel, emailErrors)"
+          [(ngModel)]="email"
+          #emailModel="ngModel"
+        />
+        <label class="login-page__label" for="login-password">Password</label>
+        <app-text-input
+          inputId="login-password"
+          name="password"
+          type="password"
+          placeholder="Password"
+          autocomplete="current-password"
+          required
+          [clearable]="false"
+          [error]="fieldError(passwordModel, passwordErrors)"
+          [(ngModel)]="password"
+          #passwordModel="ngModel"
+        />
+      </div>
+
+      @if (errorMessage(); as message) {
+        <p class="login-page__error" role="alert">{{ message }}</p>
+      }
+
+      <app-button class="login-page__submit" type="submit" [fullWidth]="true" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Logging in…' : 'Login' }}
+      </app-button>
+    </form>
+  </div>
+</main>

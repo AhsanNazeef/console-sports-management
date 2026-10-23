@@ -1,0 +1,56 @@
+@use '../../common/styles/a11y';
+@use '../../common/styles/typography' as type;
+
+.login-page {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 16px;
+  background-color: var(--color-base);
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    box-sizing: border-box;
+    width: min(513px, 100%);
+    padding: 16px;
+    border: 1px solid var(--color-white-10);
+    border-radius: var(--radius-lg);
+  }
+
+  &__logo {
+    display: flex;
+    justify-content: center;
+    padding: 16px 0;
+  }
+
+  &__title,
+  &__label {
+    @include a11y.visually-hidden;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__error {
+    @include type.label-large;
+    margin: -8px 0;
+    color: var(--color-red);
+  }
+
+  &__submit {
+    --button-height: 40px;
+  }
+}
