@@ -1,0 +1,33 @@
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  &__item {
+    display: block;
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+    color: var(--color-white);
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 14px;
+    letter-spacing: -0.408px;
+    text-decoration: none;
+
+    &:is(a):hover {
+      background-color: var(--color-white-3);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-white);
+      outline-offset: -2px;
+    }
+
+    &--current {
+      background-color: var(--color-white-10);
+    }
+  }
+}

@@ -1,0 +1,23 @@
+@use '../../styles/typography' as type;
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  &__summary,
+  &__page {
+    @include type.label-large;
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--color-white-54);
+  }
+
+  &__controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+}

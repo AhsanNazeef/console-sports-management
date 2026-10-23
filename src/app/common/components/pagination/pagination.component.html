@@ -1,0 +1,17 @@
+<nav class="pagination" aria-label="Pagination">
+  <p class="pagination__summary">{{ firstItem() }}–{{ lastItem() }} of {{ total() }}</p>
+  <div class="pagination__controls">
+    <app-button variant="outline" size="small" [disabled]="page() <= 1" (clicked)="pageChange.emit(page() - 1)">
+      Previous
+    </app-button>
+    <span class="pagination__page" aria-live="polite">Page {{ page() }} of {{ totalPages() }}</span>
+    <app-button
+      variant="outline"
+      size="small"
+      [disabled]="page() >= totalPages()"
+      (clicked)="pageChange.emit(page() + 1)"
+    >
+      Next
+    </app-button>
+  </div>
+</nav>
