@@ -1,0 +1,68 @@
+// Layout and controls shared by the popup forms (Figma "Add Sport" popup).
+@use 'typography' as type;
+
+@mixin form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+@mixin fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@mixin field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@mixin label {
+  padding: 0 8px;
+  color: var(--color-white-54);
+  font-family: var(--font-body);
+  font-size: 12px;
+}
+
+// Native textarea and select styled like the design system's text input.
+@mixin control {
+  @include type.body-large;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 16px;
+  border: 0;
+  border-radius: var(--radius-md);
+  outline: none;
+  background-color: var(--color-white-3);
+  color: var(--color-white);
+
+  &::placeholder {
+    color: var(--color-white-24);
+  }
+
+  &:focus {
+    box-shadow: inset 0 0 0 1px var(--color-white-24);
+  }
+}
+
+@mixin error {
+  @include type.label-large;
+  margin: -8px 0;
+  color: var(--color-red);
+}
+
+@mixin actions {
+  --button-height: 40px;
+
+  display: flex;
+  gap: 8px;
+  width: min(260px, 100%);
+  margin-left: auto;
+
+  app-button {
+    flex: 1;
+  }
+}

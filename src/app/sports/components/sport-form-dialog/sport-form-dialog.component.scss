@@ -1,48 +1,23 @@
-@use '../../../common/styles/typography' as type;
+@use '../../../common/styles/form';
 
 .sport-form {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  @include form.form;
 
   &__fields {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    @include form.fields;
   }
 
   &__field {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    @include form.field;
   }
 
   &__label {
-    padding: 0 8px;
-    color: var(--color-white-54);
-    font-family: var(--font-body);
-    font-size: 12px;
+    @include form.label;
   }
 
   &__textarea {
-    @include type.body-large;
-    box-sizing: border-box;
-    width: 100%;
-    padding: 11px 16px;
-    border: 0;
-    border-radius: var(--radius-md);
-    outline: none;
-    background-color: var(--color-white-3);
-    color: var(--color-white);
+    @include form.control;
     resize: vertical;
-
-    &::placeholder {
-      color: var(--color-white-24);
-    }
-
-    &:focus {
-      box-shadow: inset 0 0 0 1px var(--color-white-24);
-    }
   }
 
   &__icon-row {
@@ -79,21 +54,10 @@
   }
 
   &__error {
-    @include type.label-large;
-    margin: -8px 0;
-    color: var(--color-red);
+    @include form.error;
   }
 
   &__actions {
-    --button-height: 40px;
-
-    display: flex;
-    gap: 8px;
-    width: min(260px, 100%);
-    margin-left: auto;
-
-    app-button {
-      flex: 1;
-    }
+    @include form.actions;
   }
 }

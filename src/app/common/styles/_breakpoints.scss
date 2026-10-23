@@ -7,3 +7,9 @@ $desktop: 1024px;
     @content;
   }
 }
+
+@mixin below-desktop {
+  @media (max-width: ($desktop - 0.02px)) {
+    @content;
+  }
+}

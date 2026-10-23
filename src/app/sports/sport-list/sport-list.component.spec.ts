@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import { ApiListResponse } from '../../common/models/api.model';
 import { SearchService } from '../../common/services/search.service';
@@ -51,6 +52,7 @@ describe('SportListPage', () => {
     await TestBed.configureTestingModule({
       imports: [SportListPage],
       providers: [
+        provideRouter([]),
         { provide: SportsApiService, useValue: api },
         { provide: AuthService, useValue: { hasAnyRole: () => canEdit } },
       ],

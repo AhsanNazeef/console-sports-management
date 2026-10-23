@@ -1,0 +1,159 @@
+// Layout shared by the catalogue and drill-down pages (Figma "Sport Management" screens).
+@use 'breakpoints' as bp;
+@use 'typography' as type;
+
+@mixin page {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@mixin toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+@mixin stats($columns: 4) {
+  display: grid;
+  grid-template-columns: repeat($columns, minmax(0, 1fr));
+  gap: 10px;
+
+  @include bp.phone {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+// Title above a table with its "Add …" button on the right.
+@mixin section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 26px;
+  margin-top: 8px;
+}
+
+@mixin section-title {
+  @include type.title-large;
+  margin: 0;
+  color: var(--color-white);
+}
+
+@mixin error-banner {
+  @include type.label-large;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-red-20);
+  color: var(--color-red);
+}
+
+@mixin missing {
+  @include type.title-large;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px 16px;
+  border: 1px solid var(--color-white-10);
+  border-radius: var(--radius-lg);
+  color: var(--color-white-54);
+
+  a {
+    color: var(--color-yellow);
+  }
+}
+
+// A name in a table cell that opens the next level down.
+@mixin row-link {
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  text-overflow: ellipsis;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    border-radius: 2px;
+    outline: 2px solid var(--color-white);
+    outline-offset: 2px;
+  }
+}
+
+@mixin name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+// Everything a drill-down page needs, under one block: `.detail-page { @include page.detail-page(3); }`.
+// $stat-columns sizes a full-width row of stat cards; leave it out when the page has none.
+@mixin detail-page($stat-columns: null) {
+  @include page;
+
+  @if $stat-columns {
+    &__stats {
+      @include stats($stat-columns);
+    }
+  }
+
+  // A header with its totals in a column on the right (Figma "UEFA" screen). The totals move under it below desktop.
+  &__summary {
+    display: flex;
+    gap: 8px;
+
+    @include bp.below-desktop {
+      flex-direction: column;
+    }
+  }
+
+  &__header {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__side-stats {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: 8px;
+    width: 214px;
+
+    @include bp.below-desktop {
+      flex-direction: row;
+      width: auto;
+    }
+  }
+
+  &__section-header {
+    @include section-header;
+  }
+
+  &__section-title {
+    @include section-title;
+  }
+
+  &__error {
+    @include error-banner;
+  }
+
+  &__missing {
+    @include missing;
+  }
+
+  &__name-cell {
+    @include name-cell;
+  }
+
+  &__row-link {
+    @include row-link;
+  }
+}

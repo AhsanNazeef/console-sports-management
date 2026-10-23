@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Sport } from '../../models/sport.model';
 import { SportsTableComponent } from './sports-table.component';
 
@@ -20,7 +21,10 @@ describe('SportsTableComponent', () => {
   let element: HTMLElement;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [SportsTableComponent] }).compileComponents();
+    await TestBed.configureTestingModule({
+      imports: [SportsTableComponent],
+      providers: [provideRouter([])],
+    }).compileComponents();
     fixture = TestBed.createComponent(SportsTableComponent);
     fixture.componentRef.setInput('sports', [
       sport('a', 'Hockey', 'https://cdn.example.com/h.svg'),
@@ -39,13 +43,12 @@ describe('SportsTableComponent', () => {
     expect(element.querySelector('tbody tr:nth-child(1) img')?.getAttribute('src')).toBe(
       'https://cdn.example.com/h.svg'
     );
-    expect(element.querySelector('tbody tr:nth-child(2) .sports-table__badge')?.textContent?.trim()).toBe('B');
+    expect(element.querySelector('tbody tr:nth-child(2) .entity-avatar__badge')?.textContent?.trim()).toBe('B');
   });
 
-  it('falls back to the badge when an icon fails to load', () => {
-    element.querySelector('tbody tr:nth-child(1) img')?.dispatchEvent(new Event('error'));
-    fixture.detectChanges();
-    expect(element.querySelector('tbody tr:nth-child(1) .sports-table__badge')?.textContent?.trim()).toBe('H');
+  it('links each sport to its detail page', () => {
+    const links = Array.from(element.querySelectorAll('a.sports-table__name')).map((link) => link.getAttribute('href'));
+    expect(links).toEqual(['/sports/a', '/sports/b']);
   });
 
   it('offers edit and delete only to editors', () => {

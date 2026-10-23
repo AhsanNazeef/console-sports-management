@@ -10,8 +10,6 @@ export const DEFAULT_SPORT_QUERY: SportQuery = {
   sortOrder: 'desc',
 };
 
-// Roles the backend lets create, edit and delete sports (VIEWER and ORG get 403).
-export const SPORT_EDITOR_ROLES = ['ADMIN', 'OPERATOR'] as const;
-
-// Row accents come from the design system palette, picked per sport, since the API stores no colour.
-export const SPORT_ACCENTS = ['var(--color-yellow)', 'var(--color-green)', 'var(--color-orange)', 'var(--color-red)'];
+// Roles the backend lets add, edit and delete sports, governing bodies, organisations, teams and players.
+// VIEWER and ORG get 403.
+export const CATALOGUE_EDITOR_ROLES = ['ADMIN', 'OPERATOR'] as const;

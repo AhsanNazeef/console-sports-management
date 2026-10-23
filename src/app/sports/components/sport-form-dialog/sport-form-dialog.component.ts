@@ -32,10 +32,7 @@ export class SportFormDialogComponent {
   readonly name = linkedSignal(() => this.initial().name);
   readonly description = linkedSignal(() => this.initial().description);
   readonly iconUrl = linkedSignal(() => this.initial().iconUrl);
-  readonly iconFailed = linkedSignal(() => {
-    this.iconUrl();
-    return false;
-  });
+  readonly iconFailed = linkedSignal({ source: this.iconUrl, computation: () => false });
 
   readonly nameError = computed(() => (this.name().trim() ? null : 'Enter a sport name.'));
   readonly iconUrlError = computed(() => {

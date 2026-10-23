@@ -30,21 +30,10 @@
         <tr class="sports-table__row">
           <td class="sports-table__cell">
             <div class="sports-table__sport">
-              @if (showIcon(sport)) {
-                <img
-                  class="sports-table__icon"
-                  [src]="sport.iconUrl"
-                  width="20"
-                  height="20"
-                  alt=""
-                  (error)="markIconBroken(sport.id)"
-                />
-              } @else {
-                <span class="sports-table__badge" [style.background-color]="accentFor(sport.id)" aria-hidden="true">
-                  {{ sport.name.charAt(0).toUpperCase() }}
-                </span>
-              }
-              <span class="sports-table__name" [title]="sport.name">{{ sport.name }}</span>
+              <app-entity-avatar [name]="sport.name" [imageUrl]="sport.iconUrl" [seed]="sport.id" />
+              <a class="sports-table__name" [routerLink]="['/sports', sport.id]" [title]="sport.name">{{
+                sport.name
+              }}</a>
             </div>
           </td>
           <td class="sports-table__cell sports-table__cell--shaded">{{ sport.governingBodyCount }}</td>

@@ -7,25 +7,29 @@
   </div>
 
   <section class="sport-list__stats" aria-label="Catalogue totals">
-    <app-stat-card label="Sports" [value]="totals()?.sports ?? null" [loading]="totalsLoading()" />
-    <app-stat-card label="Governing Bodies" [value]="totals()?.governingBodies ?? null" [loading]="totalsLoading()" />
-    <app-stat-card label="Organisations" [value]="totals()?.organisations ?? null" [loading]="totalsLoading()" />
-    <app-stat-card label="Participants" [value]="totals()?.participants ?? null" [loading]="totalsLoading()" />
+    <app-stat-card label="Sports" [value]="totals.value()?.sports ?? null" [loading]="totals.loading()" />
+    <app-stat-card
+      label="Governing Bodies"
+      [value]="totals.value()?.governingBodies ?? null"
+      [loading]="totals.loading()"
+    />
+    <app-stat-card label="Organisations" [value]="totals.value()?.organisations ?? null" [loading]="totals.loading()" />
+    <app-stat-card label="Participants" [value]="totals.value()?.participants ?? null" [loading]="totals.loading()" />
   </section>
 
-  @if (loadError(); as message) {
+  @if (list.failed()) {
     <div class="sport-list__error" role="alert">
-      <span>{{ message }}</span>
+      <span>Couldn't load the sports. Please try again.</span>
       <app-button variant="outline" size="small" (clicked)="retry()">Try again</app-button>
     </div>
   }
 
   <app-sports-table
-    [sports]="sports()"
+    [sports]="list.rows()"
     [canEdit]="canEdit()"
-    [sortBy]="query().sortBy"
-    [sortOrder]="query().sortOrder"
-    [loading]="isLoading()"
+    [sortBy]="list.query().sortBy"
+    [sortOrder]="list.query().sortOrder"
+    [loading]="list.loading()"
     [skeletonRowCount]="pageSize"
     [emptyMessage]="emptyMessage()"
     (sortByName)="cycleNameSort()"
@@ -33,8 +37,13 @@
     (remove)="askToDelete($event)"
   />
 
-  @if (total() > 0) {
-    <app-pagination [page]="query().page" [pageSize]="pageSize" [total]="total()" (pageChange)="goToPage($event)" />
+  @if (list.total() > 0) {
+    <app-pagination
+      [page]="list.query().page"
+      [pageSize]="pageSize"
+      [total]="list.total()"
+      (pageChange)="list.goToPage($event)"
+    />
   }
 </div>
 
