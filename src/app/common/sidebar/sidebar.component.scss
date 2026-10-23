@@ -1,5 +1,7 @@
 @use '../styles/typography' as type;
 
+$transition: 0.2s ease;
+
 :host {
   display: block;
 }
@@ -13,6 +15,7 @@
   padding: 0 16px;
   border-right: 1px solid var(--color-white-10);
   background-color: var(--color-base);
+  transition: width $transition;
 
   &__logo {
     display: flex;
@@ -20,6 +23,20 @@
     align-items: center;
     justify-content: space-between;
     height: 48px;
+  }
+
+  // The logo starts with the Buzzer mark, so narrowing this box leaves just the mark.
+  &__brand {
+    display: block;
+    flex-shrink: 0;
+    width: 100px;
+    overflow: hidden;
+    transition: width $transition;
+
+    img {
+      display: block;
+      max-width: none;
+    }
   }
 
   &__collapse,
@@ -39,6 +56,11 @@
     padding: 0;
   }
 
+  &__collapse img,
+  &__group-icon {
+    transition: transform $transition;
+  }
+
   &__nav {
     display: flex;
     flex: 1;
@@ -46,6 +68,7 @@
     gap: 4px;
     min-height: 0;
     padding-bottom: 16px;
+    overflow-x: hidden;
     overflow-y: auto;
   }
 
@@ -53,15 +76,34 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    transition:
+      gap $transition,
+      padding $transition,
+      border-color $transition;
+  }
+
+  // The divider between groups only shows in the icon rail; the negative margin keeps the open layout unchanged.
+  &__group + &__group {
+    margin-top: -1px;
+    border-top: 1px solid transparent;
   }
 
   &__group-toggle {
     @include type.title-caps;
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: space-between;
+    box-sizing: border-box;
+    height: 32px;
     padding: 4px 16px;
+    overflow: hidden;
     color: var(--color-white-54);
+    white-space: nowrap;
+    transition:
+      height $transition,
+      padding $transition,
+      opacity $transition;
   }
 
   &__group-toggle[aria-expanded='false'] &__group-icon {
@@ -82,13 +124,13 @@
 
   &__item {
     @include type.title-large;
-    position: relative;
     display: flex;
     align-items: center;
     gap: 16px;
     box-sizing: border-box;
     height: 48px;
     padding: 16px;
+    overflow: hidden;
     border-radius: var(--radius-lg);
     color: var(--color-white);
     text-decoration: none;
@@ -107,27 +149,52 @@
     &--active:hover {
       background-color: var(--color-white-10);
     }
+
+    img {
+      flex-shrink: 0;
+    }
+  }
+
+  &__item-label {
+    transition: opacity $transition;
   }
 
   &--collapsed {
     width: 88px;
   }
 
+  &--collapsed &__brand {
+    width: 23px;
+  }
+
   &--collapsed &__collapse img {
     transform: rotate(180deg);
   }
 
-  &--collapsed &__group + &__group {
-    padding-top: 8px;
-    border-top: 1px solid var(--color-white-10);
+  &--collapsed &__group {
+    gap: 0;
   }
 
-  // Hidden on screen but kept as the link's accessible name.
+  &--collapsed &__group + &__group {
+    padding-top: 8px;
+    border-top-color: var(--color-white-10);
+  }
+
+  &--collapsed &__group-toggle {
+    height: 0;
+    padding-block: 0;
+    opacity: 0;
+  }
+
+  // Faded out but still the link's accessible name.
   &--collapsed &__item-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &,
+    * {
+      transition: none;
+    }
   }
 }

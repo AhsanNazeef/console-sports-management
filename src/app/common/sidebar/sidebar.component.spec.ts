@@ -65,7 +65,7 @@ describe('SidebarComponent', () => {
     fixture.componentRef.setInput('collapsed', true);
     fixture.detectChanges();
     expect(queryAll('.sidebar--collapsed').length).toBe(1);
-    expect(queryAll('.sidebar__group-toggle').length).toBe(0);
+    expect(queryAll('.sidebar__group-toggle').every((toggle) => toggle.hasAttribute('inert'))).toBe(true);
     expect(queryAll('.sidebar__item')[0].getAttribute('title')).toBe('Sports');
   });
 });

@@ -52,4 +52,11 @@
     transform: none;
     transition: transform 0.2s ease;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    &--phone &__sidebar,
+    &--drawer-open &__sidebar {
+      transition: none;
+    }
+  }
 }
