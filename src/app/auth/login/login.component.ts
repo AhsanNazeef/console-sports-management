@@ -73,9 +73,11 @@ export class LoginPage {
     this.submitRequests$.next();
   }
 
-  // The first validation message for a field, once the user has left it or tried to submit.
+  // The first validation message for a field: after a submit attempt, or once the user has typed in it and left.
+  // A field that was only clicked through stays quiet until submit.
   fieldError(control: NgModel, messages: Record<string, string>): string | null {
-    if (!control.errors || !(control.touched || this.hasSubmitted())) {
+    const typedAndLeft = control.dirty && control.touched;
+    if (!control.errors || !(typedAndLeft || this.hasSubmitted())) {
       return null;
     }
     return messages[Object.keys(control.errors)[0]] ?? null;

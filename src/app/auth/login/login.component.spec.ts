@@ -73,6 +73,28 @@ describe('LoginPage', () => {
     expect(authService.login$).not.toHaveBeenCalled();
   });
 
+  it('stays quiet when an empty field is only clicked through', async () => {
+    const page = await setUp();
+    page.querySelector('#login-email')?.dispatchEvent(new Event('blur'));
+    page.querySelector('#login-password')?.dispatchEvent(new Event('blur'));
+    await settle();
+    expect(text(page)).not.toContain('Enter your email address.');
+    expect(text(page)).not.toContain('Enter your password.');
+  });
+
+  it('flags a badly typed email once the user leaves the field', async () => {
+    const page = await setUp();
+    const email = page.querySelector('#login-email') as HTMLInputElement;
+    email.value = 'admin@';
+    email.dispatchEvent(new Event('input'));
+    await settle();
+    expect(text(page)).not.toContain('Enter a valid email address.');
+
+    email.dispatchEvent(new Event('blur'));
+    await settle();
+    expect(text(page)).toContain('Enter a valid email address.');
+  });
+
   it('logs in and opens the dashboard', async () => {
     const page = await setUp();
     authService.login$.mockReturnValue(of({ id: 'u1', email: 'admin@buzzer.dev', role: 'ADMIN' }));
