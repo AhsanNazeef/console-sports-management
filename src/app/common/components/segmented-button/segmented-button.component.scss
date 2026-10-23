@@ -1,0 +1,37 @@
+@use '../../styles/typography' as type;
+
+:host {
+  display: block;
+}
+
+.segmented {
+  display: flex;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 2px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-white-10);
+
+  &__option {
+    @include type.label-large;
+    flex: 1;
+    min-width: 0;
+    padding: 0 8px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-white);
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-white);
+      outline-offset: -2px;
+    }
+
+    &--selected {
+      @include type.label-large-bold;
+      background-color: var(--color-yellow);
+      color: var(--color-base);
+    }
+  }
+}
