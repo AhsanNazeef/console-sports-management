@@ -1,0 +1,8 @@
+@use '../../styles/typography' as type;
+
+.coming-soon {
+  @include type.title-large;
+  margin: 0;
+  padding: 8px;
+  color: var(--color-white-54);
+}

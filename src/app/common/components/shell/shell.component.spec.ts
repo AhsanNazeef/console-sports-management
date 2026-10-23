@@ -1,0 +1,59 @@
+import { Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter, TitleStrategy } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { firstValueFrom } from 'rxjs';
+import { PageTitleService } from '../../../core/page-title.service';
+import { SearchService } from '../../services/search.service';
+import { ShellComponent } from './shell.component';
+
+@Component({ template: '' })
+class BlankPage {}
+
+describe('ShellComponent', () => {
+  let harness: RouterTestingHarness;
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([
+          {
+            path: '',
+            component: ShellComponent,
+            children: [
+              { path: 'sports', title: 'Sport Management', component: BlankPage },
+              { path: 'users', title: 'Users', component: BlankPage },
+            ],
+          },
+        ]),
+        { provide: TitleStrategy, useExisting: PageTitleService },
+      ],
+    });
+    harness = await RouterTestingHarness.create('/sports');
+  });
+
+  const query = (selector: string): HTMLElement | null => harness.fixture.nativeElement.querySelector(selector);
+
+  it('shows the sidebar and the current page title', () => {
+    expect(query('app-sidebar')).toBeTruthy();
+    expect(query('.header__title')?.textContent).toContain('Sport Management');
+  });
+
+  it('shares the search text and clears it on navigation', async () => {
+    const search = TestBed.inject(SearchService);
+    const input = query('.header__search-input') as HTMLInputElement;
+    input.value = 'foot';
+    input.dispatchEvent(new Event('input'));
+    expect(await firstValueFrom(search.query$)).toBe('foot');
+
+    await harness.navigateByUrl('/users');
+    expect(await firstValueFrom(search.query$)).toBe('');
+    expect(query('.header__title')?.textContent).toContain('Users');
+  });
+
+  it('collapses the sidebar', async () => {
+    (query('.sidebar__collapse') as HTMLButtonElement).click();
+    await harness.fixture.whenStable();
+    expect(query('.sidebar--collapsed')).toBeTruthy();
+  });
+});

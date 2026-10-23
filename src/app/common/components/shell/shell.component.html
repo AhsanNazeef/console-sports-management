@@ -1,0 +1,18 @@
+<div class="shell">
+  <app-sidebar
+    class="shell__sidebar"
+    [groups]="navGroups"
+    [collapsed]="sidebarCollapsed()"
+    (collapsedChange)="sidebarCollapsed.set($event)"
+  />
+  <div class="shell__main">
+    <app-header
+      [heading]="pageTitle()"
+      [searchQuery]="searchQuery()"
+      (searchQueryChange)="onSearchQueryChange($event)"
+    />
+    <main class="shell__content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
