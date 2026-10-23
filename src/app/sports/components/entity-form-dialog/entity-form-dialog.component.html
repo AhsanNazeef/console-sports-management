@@ -1,0 +1,41 @@
+<app-modal [open]="open()" [heading]="heading()" (closed)="cancelled.emit()">
+  @if (open()) {
+    <form class="entity-form" novalidate (ngSubmit)="onSubmit()">
+      <div class="entity-form__fields">
+        <div class="entity-form__field">
+          <label class="entity-form__label" for="entity-name">Name</label>
+          <app-text-input
+            inputId="entity-name"
+            name="name"
+            [placeholder]="namePlaceholder()"
+            [error]="shownError(nameModel, nameError())"
+            [ngModel]="name()"
+            (ngModelChange)="name.set($event)"
+            #nameModel="ngModel"
+          />
+        </div>
+        <div class="entity-form__field">
+          <label class="entity-form__label" for="entity-detail">{{ detailLabel() }}</label>
+          <app-text-input
+            inputId="entity-detail"
+            name="detail"
+            placeholder="Optional"
+            [ngModel]="detail()"
+            (ngModelChange)="detail.set($event)"
+          />
+        </div>
+      </div>
+
+      @if (error(); as message) {
+        <p class="entity-form__error" role="alert">{{ message }}</p>
+      }
+
+      <div class="entity-form__actions">
+        <app-button variant="outline" [fullWidth]="true" (clicked)="cancelled.emit()">Cancel</app-button>
+        <app-button type="submit" [fullWidth]="true" [disabled]="!canSave()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </app-button>
+      </div>
+    </form>
+  }
+</app-modal>

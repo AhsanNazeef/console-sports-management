@@ -1,0 +1,100 @@
+<app-modal [open]="open()" heading="Add Participant" (closed)="cancelled.emit()">
+  @if (open()) {
+    <form class="participant-form" novalidate (ngSubmit)="onSubmit()">
+      <div class="participant-form__fields">
+        <div class="participant-form__row">
+          <div class="participant-form__field">
+            <label class="participant-form__label" for="participant-first-name">First name</label>
+            <app-text-input
+              inputId="participant-first-name"
+              name="firstName"
+              placeholder="First name"
+              [error]="shownError(firstNameModel, firstNameError())"
+              [ngModel]="firstName()"
+              (ngModelChange)="firstName.set($event)"
+              #firstNameModel="ngModel"
+            />
+          </div>
+          <div class="participant-form__field">
+            <label class="participant-form__label" for="participant-last-name">Last name</label>
+            <app-text-input
+              inputId="participant-last-name"
+              name="lastName"
+              placeholder="Last name"
+              [error]="shownError(lastNameModel, lastNameError())"
+              [ngModel]="lastName()"
+              (ngModelChange)="lastName.set($event)"
+              #lastNameModel="ngModel"
+            />
+          </div>
+        </div>
+
+        <div class="participant-form__field">
+          <label class="participant-form__label" for="participant-team">Team</label>
+          <select
+            id="participant-team"
+            class="participant-form__select"
+            name="team"
+            [ngModel]="teamChoice()"
+            (ngModelChange)="teamChoice.set($event)"
+          >
+            @for (team of teams(); track team.id) {
+              <option [value]="team.id">{{ team.name }}</option>
+            }
+            <option [value]="newTeam">New team…</option>
+          </select>
+          @if (teamChoice() === newTeam) {
+            @if (teams().length === 0) {
+              <p class="participant-form__hint">This organisation has no teams yet. Name its first one.</p>
+            }
+            <app-text-input
+              inputId="participant-new-team"
+              name="newTeamName"
+              placeholder="New team name"
+              [error]="shownError(newTeamModel, newTeamError())"
+              [ngModel]="newTeamName()"
+              (ngModelChange)="newTeamName.set($event)"
+              #newTeamModel="ngModel"
+            />
+          }
+        </div>
+
+        <div class="participant-form__row">
+          <div class="participant-form__field">
+            <label class="participant-form__label" for="participant-position">Position</label>
+            <app-text-input
+              inputId="participant-position"
+              name="position"
+              placeholder="Optional"
+              [ngModel]="position()"
+              (ngModelChange)="position.set($event)"
+            />
+          </div>
+          <div class="participant-form__field">
+            <label class="participant-form__label" for="participant-jersey">Jersey number</label>
+            <app-text-input
+              inputId="participant-jersey"
+              name="jerseyNumber"
+              placeholder="Optional"
+              [error]="shownError(jerseyModel, jerseyError())"
+              [ngModel]="jerseyNumber()"
+              (ngModelChange)="jerseyNumber.set($event)"
+              #jerseyModel="ngModel"
+            />
+          </div>
+        </div>
+      </div>
+
+      @if (error(); as message) {
+        <p class="participant-form__error" role="alert">{{ message }}</p>
+      }
+
+      <div class="participant-form__actions">
+        <app-button variant="outline" [fullWidth]="true" (clicked)="cancelled.emit()">Cancel</app-button>
+        <app-button type="submit" [fullWidth]="true" [disabled]="!canSave()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </app-button>
+      </div>
+    </form>
+  }
+</app-modal>
