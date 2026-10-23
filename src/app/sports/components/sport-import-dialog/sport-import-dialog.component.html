@@ -1,0 +1,69 @@
+<app-modal [open]="open()" heading="Import Sports" (closed)="closed.emit()">
+  @if (open()) {
+    <div class="sport-import">
+      @if (finished()) {
+        @let result = progress()!;
+        <section class="sport-import__totals" aria-label="Import totals">
+          <app-stat-card label="Added" [compact]="true" [value]="result.added" />
+          <app-stat-card label="Skipped" [compact]="true" [value]="result.skipped" />
+          <app-stat-card label="Failed" [compact]="true" [value]="result.failures.length" />
+        </section>
+        @if (result.skipped > 0) {
+          <p class="sport-import__note">
+            Skipped sports already exist in the catalogue, or were deleted and their names are still reserved.
+          </p>
+        }
+        @if (result.failures.length > 0) {
+          <ul class="sport-import__failures" aria-label="Rows that failed">
+            @for (failure of result.failures; track failure.row) {
+              <li>
+                <span class="sport-import__row">Row {{ failure.row }} “{{ failure.name || 'no name' }}”:</span>
+                {{ failure.message }}
+              </li>
+            }
+          </ul>
+        }
+        <div class="sport-import__actions">
+          <app-button [fullWidth]="true" (clicked)="closed.emit()">Close</app-button>
+        </div>
+      } @else {
+        <p class="sport-import__note">
+          Choose a CSV or JSON file. A CSV file needs a header row with a <code>name</code> column, and may add
+          <code>description</code> and <code>iconUrl</code>. A JSON file is a list such as
+          <code>[{{ '{' }}"name": "Padel"{{ '}' }}]</code>. Sports whose name is already taken are skipped.
+        </p>
+        <div class="sport-import__field">
+          <label class="sport-import__label" for="sport-import-file">File</label>
+          <input
+            id="sport-import-file"
+            class="sport-import__file"
+            type="file"
+            accept=".csv,.json,text/csv,application/json"
+            [disabled]="importing()"
+            (change)="onFileChange($event)"
+          />
+        </div>
+
+        @if (fileError(); as message) {
+          <p class="sport-import__error" role="alert">{{ message }}</p>
+        } @else if (importing() && progress(); as current) {
+          <div class="sport-import__progress">
+            <progress [value]="current.done" [max]="current.total" aria-label="Import progress"></progress>
+            <output>Importing {{ currentRow() }} of {{ current.total }}…</output>
+          </div>
+        } @else if (rowCount(); as count) {
+          <p class="sport-import__ready">{{ count }} {{ count === 1 ? 'row' : 'rows' }} ready to import.</p>
+        }
+
+        <div class="sport-import__actions">
+          <app-button variant="outline" [fullWidth]="true" [disabled]="importing()" (clicked)="closed.emit()">
+            Cancel
+          </app-button>
+          <app-button [fullWidth]="true" [disabled]="!canStart()" (clicked)="startImport.emit()">
+            {{ importing() ? 'Importing…' : 'Import' }}
+          </app-button>
+        </div>
+      }
+    </div>
+  }
+</app-modal>

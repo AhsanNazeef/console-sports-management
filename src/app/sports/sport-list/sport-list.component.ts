@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs';
+import { finalize, from } from 'rxjs';
 import { Breadcrumb, BreadcrumbsComponent } from '../../common/components/breadcrumbs/breadcrumbs.component';
 import { ButtonComponent } from '../../common/components/button/button.component';
 import { DialogComponent } from '../../common/components/dialog/dialog.component';
@@ -12,10 +12,14 @@ import { createPagedList } from '../../common/utils/paged-list.util';
 import { createReloadable } from '../../common/utils/reloadable.util';
 import { AuthService } from '../../core/auth/services/auth.service';
 import { SportFormDialogComponent } from '../components/sport-form-dialog/sport-form-dialog.component';
+import { SportImportDialogComponent } from '../components/sport-import-dialog/sport-import-dialog.component';
 import { SportsTableComponent } from '../components/sports-table/sports-table.component';
 import { CATALOGUE_EDITOR_ROLES, DEFAULT_SPORT_QUERY, SPORTS_PAGE_SIZE } from '../constants/sports.constants';
+import { SportImportProgress, SportImportRow } from '../models/sport-import.model';
 import { Sport, SportInput, SportQuery } from '../models/sport.model';
+import { SportImportService } from '../services/sport-import.service';
 import { SportsApiService } from '../services/sports-api.service';
+import { parseSportImport } from '../utils/sport-import.util';
 
 @Component({
   selector: 'app-sport-list-page',
@@ -26,6 +30,7 @@ import { SportsApiService } from '../services/sports-api.service';
     DialogComponent,
     PaginationComponent,
     SportFormDialogComponent,
+    SportImportDialogComponent,
     SportsTableComponent,
     StatCardComponent,
   ],
@@ -35,6 +40,7 @@ import { SportsApiService } from '../services/sports-api.service';
 })
 export class SportListPage {
   private readonly sportsApi = inject(SportsApiService);
+  private readonly sportImport = inject(SportImportService);
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -54,6 +60,13 @@ export class SportListPage {
   readonly deleting = signal<Sport | null>(null);
   readonly isSaving = signal(false);
   readonly actionError = signal<string | null>(null);
+
+  // Bulk import from a CSV or JSON file.
+  readonly importOpen = signal(false);
+  readonly importRows = signal<SportImportRow[] | null>(null);
+  readonly importFileError = signal<string | null>(null);
+  readonly importProgress = signal<SportImportProgress | null>(null);
+  readonly importing = signal(false);
 
   // Shown when there are no rows and nothing is loading (the table shows skeleton rows while it loads).
   readonly emptyMessage = computed(() => {
@@ -151,6 +164,58 @@ export class SportListPage {
         error: (error: unknown) =>
           this.actionError.set(describeHttpError(error, "Couldn't delete the sport. Please try again.")),
       });
+  }
+
+  openImport(): void {
+    this.importRows.set(null);
+    this.importFileError.set(null);
+    this.importProgress.set(null);
+    this.importOpen.set(true);
+  }
+
+  readImportFile(file: File): void {
+    this.importRows.set(null);
+    this.importFileError.set(null);
+    from(file.text())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (text) => {
+          const parsed = parseSportImport(file.name, text);
+          this.importRows.set(parsed.rows);
+          this.importFileError.set(parsed.error);
+        },
+        error: () => this.importFileError.set("Couldn't read this file. Choose it again."),
+      });
+  }
+
+  startImport(): void {
+    const rows = this.importRows();
+    if (!rows || this.importing()) {
+      return;
+    }
+    this.importing.set(true);
+    this.sportImport
+      .import$(rows)
+      .pipe(
+        finalize(() => this.importing.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: (progress) => this.importProgress.set(progress),
+        complete: () => {
+          // Added sports come first in the default order.
+          this.list.goToPage(1);
+          this.list.reload();
+          this.totals.reload();
+        },
+      });
+  }
+
+  // The popup stays open until every row has been sent.
+  closeImport(): void {
+    if (!this.importing()) {
+      this.importOpen.set(false);
+    }
   }
 
   private describeSaveError(error: unknown, name: string): string {

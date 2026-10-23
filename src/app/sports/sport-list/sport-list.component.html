@@ -2,7 +2,10 @@
   <div class="sport-list__toolbar">
     <app-breadcrumbs [items]="breadcrumbs" />
     @if (canEdit()) {
-      <app-button variant="outline" size="small" icon="ic_add" (clicked)="openAdd()">Add Sport</app-button>
+      <div class="sport-list__actions">
+        <app-button variant="outline" size="small" icon="ic_documents" (clicked)="openImport()">Import</app-button>
+        <app-button variant="outline" size="small" icon="ic_add" (clicked)="openAdd()">Add Sport</app-button>
+      </div>
     }
   </div>
 
@@ -54,6 +57,17 @@
   [error]="actionError()"
   (save)="saveSport($event)"
   (cancelled)="closeForm()"
+/>
+
+<app-sport-import-dialog
+  [open]="importOpen()"
+  [rowCount]="importRows()?.length ?? null"
+  [fileError]="importFileError()"
+  [progress]="importProgress()"
+  [importing]="importing()"
+  (fileChosen)="readImportFile($event)"
+  (startImport)="startImport()"
+  (closed)="closeImport()"
 />
 
 <app-dialog

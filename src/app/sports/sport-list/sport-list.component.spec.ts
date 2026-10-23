@@ -5,7 +5,9 @@ import { Observable, of, Subject, throwError } from 'rxjs';
 import { ApiListResponse } from '../../common/models/api.model';
 import { SearchService } from '../../common/services/search.service';
 import { AuthService } from '../../core/auth/services/auth.service';
+import { SportImportProgress, SportImportRow } from '../models/sport-import.model';
 import { CatalogueTotals, Sport, SportQuery } from '../models/sport.model';
+import { SportImportService } from '../services/sport-import.service';
 import { SportsApiService } from '../services/sports-api.service';
 import { SportListPage } from './sport-list.component';
 
@@ -38,6 +40,9 @@ describe('SportListPage', () => {
     updateSport$: ReturnType<typeof vi.fn>;
     deleteSport$: ReturnType<typeof vi.fn>;
   };
+  let sportImport: {
+    import$: ReturnType<typeof vi.fn<(rows: readonly SportImportRow[]) => Observable<SportImportProgress>>>;
+  };
 
   // `adjustApi` can swap fake responses before the page is created (for example, requests that never answer).
   async function setUp(canEdit = true, adjustApi?: () => void): Promise<void> {
@@ -48,12 +53,21 @@ describe('SportListPage', () => {
       updateSport$: vi.fn(() => of(sport('a', 'Ice Hockey'))),
       deleteSport$: vi.fn(() => of(undefined)),
     };
+    sportImport = {
+      import$: vi.fn((rows: readonly SportImportRow[]) =>
+        of(
+          { total: rows.length, done: 0, added: 0, skipped: 0, failures: [] },
+          { total: rows.length, done: rows.length, added: 1, skipped: rows.length - 1, failures: [] }
+        )
+      ),
+    };
     adjustApi?.();
     await TestBed.configureTestingModule({
       imports: [SportListPage],
       providers: [
         provideRouter([]),
         { provide: SportsApiService, useValue: api },
+        { provide: SportImportService, useValue: sportImport },
         { provide: AuthService, useValue: { hasAnyRole: () => canEdit } },
       ],
     }).compileComponents();
@@ -131,7 +145,40 @@ describe('SportListPage', () => {
   it('hides adding, editing and deleting from roles that cannot change sports', async () => {
     await setUp(false);
     expect(buttonWithText('Add Sport')).toBeUndefined();
+    expect(buttonWithText('Import')).toBeUndefined();
     expect(element.querySelector('.sports-table__action')).toBeNull();
+  });
+
+  it('imports the rows of a chosen file, then reloads the list and the totals', async () => {
+    await setUp();
+    const sportsCalls = api.getSports$.mock.calls.length;
+    buttonWithText('Import').click();
+    await settle();
+    const file = { name: 'sports.csv', text: () => Promise.resolve('name\nPadel\nSoccer\n') } as File;
+    fixture.componentInstance.readImportFile(file);
+    await settle();
+    expect(element.textContent).toContain('2 rows ready to import.');
+
+    const dialogButton = (text: string): HTMLButtonElement =>
+      Array.from(element.querySelectorAll('app-sport-import-dialog button')).find(
+        (button) => button.textContent?.trim() === text
+      ) as HTMLButtonElement;
+    dialogButton('Import').click();
+    await settle();
+    expect(sportImport.import$).toHaveBeenCalledWith([
+      { row: 1, sport: { name: 'Padel' } },
+      { row: 2, sport: { name: 'Soccer' } },
+    ]);
+    const totals = Array.from(element.querySelectorAll('.sport-import__totals app-stat-card')).map((card) =>
+      card.textContent?.replace(/\s+/g, ' ').trim()
+    );
+    expect(totals).toEqual(['1 Added', '1 Skipped', '0 Failed']);
+    expect(api.getSports$.mock.calls.length).toBeGreaterThan(sportsCalls);
+    expect(api.getCatalogueTotals$).toHaveBeenCalledTimes(2);
+
+    dialogButton('Close').click();
+    await settle();
+    expect(element.querySelector('app-sport-import-dialog .modal')).toBeNull();
   });
 
   it('adds a sport, then reloads the list and the totals', async () => {

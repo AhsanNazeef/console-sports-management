@@ -8,6 +8,13 @@
     @include page.toolbar;
   }
 
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
   &__stats {
     @include page.stats(4);
   }
