@@ -1,0 +1,18 @@
+<div class="detail-page">
+  <app-breadcrumbs [items]="breadcrumbs()" />
+
+  @if (notFound()) {
+    <div class="detail-page__missing" role="alert">
+      <span>This participant doesn't exist here or has been deleted.</span>
+      <a [routerLink]="organisationLink()">Back to the organisation</a>
+    </div>
+  } @else {
+    <app-detail-header
+      layout="stacked"
+      [title]="fullName()"
+      [seed]="participantId()"
+      [fields]="fields()"
+      [loading]="!participant.value()"
+    />
+  }
+</div>

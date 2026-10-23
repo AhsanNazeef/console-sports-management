@@ -1,0 +1,93 @@
+<div class="detail-page">
+  <app-breadcrumbs [items]="breadcrumbs()" />
+
+  @if (notFound()) {
+    <div class="detail-page__missing" role="alert">
+      <span>This governing body doesn't exist here or has been deleted.</span>
+      <a [routerLink]="sportLink()">Back to the sport</a>
+    </div>
+  } @else {
+    <div class="detail-page__summary">
+      <app-detail-header
+        class="detail-page__header"
+        layout="stacked"
+        [title]="governingBody.value()?.name ?? ''"
+        [seed]="governingBodyId()"
+        [fields]="fields()"
+        [loading]="!governingBody.value()"
+      />
+
+      <section class="detail-page__side-stats" aria-label="Governing body totals">
+        <app-stat-card
+          label="Organisations"
+          [compact]="true"
+          [value]="counts.value()?.organisations ?? null"
+          [loading]="counts.loading()"
+        />
+        <app-stat-card
+          label="Participants"
+          [compact]="true"
+          [value]="counts.value()?.participants ?? null"
+          [loading]="counts.loading()"
+        />
+      </section>
+    </div>
+
+    <div class="detail-page__section-header">
+      <h2 class="detail-page__section-title">Organisations</h2>
+      @if (canEdit()) {
+        <app-button variant="outline" size="small" icon="ic_add" (clicked)="openAdd()">Add Organisation</app-button>
+      }
+    </div>
+
+    @if (organisations.failed()) {
+      <div class="detail-page__error" role="alert">
+        <span>Couldn't load the organisations. Please try again.</span>
+        <app-button variant="outline" size="small" (clicked)="organisations.reload()">Try again</app-button>
+      </div>
+    }
+
+    <app-data-table
+      label="Organisations"
+      [columns]="columns"
+      [rows]="organisations.rows()"
+      [loading]="organisations.loading()"
+      [skeletonRowCount]="pageSize"
+      [emptyMessage]="emptyMessage()"
+    >
+      <ng-template let-row let-key="key">
+        @switch (key) {
+          @case ('name') {
+            <div class="detail-page__name-cell">
+              <app-entity-avatar [name]="row.name" [imageUrl]="row.crestUrl" [seed]="row.id" />
+              <a class="detail-page__row-link" [routerLink]="linkTo(row)" [title]="row.name">{{ row.name }}</a>
+            </div>
+          }
+          @case ('participants') {
+            {{ row.participantCount ?? 0 }}
+          }
+        }
+      </ng-template>
+    </app-data-table>
+
+    @if (organisations.total() > 0) {
+      <app-pagination
+        [page]="organisations.query().page"
+        [pageSize]="pageSize"
+        [total]="organisations.total()"
+        (pageChange)="organisations.goToPage($event)"
+      />
+    }
+  }
+</div>
+
+<app-entity-form-dialog
+  heading="Add Organisation"
+  namePlaceholder="Organisation name"
+  detailLabel="City"
+  [open]="formOpen()"
+  [saving]="isSaving()"
+  [error]="saveError()"
+  (save)="addOrganisation($event)"
+  (cancelled)="closeForm()"
+/>
