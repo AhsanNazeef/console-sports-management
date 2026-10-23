@@ -1,0 +1,56 @@
+<app-modal [open]="open()" [heading]="heading()" (closed)="cancelled.emit()">
+  @if (open()) {
+    <form class="squad-form" novalidate (ngSubmit)="onSubmit()">
+      <div class="squad-form__fields">
+        <div class="squad-form__field">
+          @if (member(); as current) {
+            <span class="squad-form__label">Player</span>
+            <p class="squad-form__player">
+              {{ current.displayName }} <span class="squad-form__email">({{ current.email }})</span>
+            </p>
+          } @else {
+            <label class="squad-form__label" for="squad-member-user">Player</label>
+            <app-user-picker inputId="squad-member-user" [(selected)]="user" />
+          }
+        </div>
+
+        <div class="squad-form__row">
+          <div class="squad-form__field">
+            <label class="squad-form__label" for="squad-member-position">Position</label>
+            <app-text-input
+              inputId="squad-member-position"
+              name="position"
+              placeholder="Position"
+              [error]="shownError(positionModel, positionError())"
+              [ngModel]="position()"
+              (ngModelChange)="position.set($event)"
+              #positionModel="ngModel"
+            />
+          </div>
+          <div class="squad-form__field">
+            <label class="squad-form__label" for="squad-member-agreement-end">Agreement end (optional)</label>
+            <input
+              id="squad-member-agreement-end"
+              class="squad-form__date"
+              type="date"
+              name="agreementEnd"
+              [ngModel]="agreementEnd()"
+              (ngModelChange)="agreementEnd.set($event ?? '')"
+            />
+          </div>
+        </div>
+      </div>
+
+      @if (error(); as message) {
+        <p class="squad-form__error" role="alert">{{ message }}</p>
+      }
+
+      <div class="squad-form__actions">
+        <app-button variant="outline" [fullWidth]="true" (clicked)="cancelled.emit()">Cancel</app-button>
+        <app-button type="submit" [fullWidth]="true" [disabled]="!canSave()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </app-button>
+      </div>
+    </form>
+  }
+</app-modal>

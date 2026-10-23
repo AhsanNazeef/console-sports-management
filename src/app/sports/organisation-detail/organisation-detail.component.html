@@ -16,51 +16,71 @@
       [loading]="!organisation.value()"
     />
 
-    <div class="detail-page__section-header">
-      <h2 class="detail-page__section-title">Participants</h2>
-      @if (canEdit()) {
-        <app-button variant="outline" size="small" icon="ic_add" (clicked)="openAdd()">Add Participant</app-button>
-      }
-    </div>
+    <app-tabs
+      class="detail-page__tabs"
+      [tabs]="tabs"
+      [activeId]="activeTab()"
+      (activeIdChange)="activeTab.set($event)"
+    />
 
-    @if (participants.failed()) {
-      <div class="detail-page__error" role="alert">
-        <span>Couldn't load the participants. Please try again.</span>
-        <app-button variant="outline" size="small" (clicked)="participants.reload()">Try again</app-button>
-      </div>
-    }
-
-    <app-data-table
-      label="Participants"
-      [columns]="columns"
-      [rows]="participants.rows()"
-      [loading]="participants.loading()"
-      [skeletonRowCount]="pageSize"
-      [emptyMessage]="emptyMessage()"
-    >
-      <ng-template let-row let-key="key">
-        @switch (key) {
-          @case ('name') {
-            @let name = fullName(row);
-            <div class="detail-page__name-cell">
-              <app-entity-avatar [name]="name" [seed]="row.id" />
-              <a class="detail-page__row-link" [routerLink]="linkTo(row)" skipLocationChange [title]="name">{{
-                name
-              }}</a>
+    <div class="detail-page__tab-panel" role="tabpanel" [attr.aria-label]="activeTabLabel()">
+      @switch (activeTab()) {
+        @case ('squad') {
+          <app-squad-panel [organisationId]="organisationId()" [canEdit]="canEditMembers()" />
+        }
+        @case ('staff') {
+          <app-staff-panel [organisationId]="organisationId()" [canEdit]="canEditMembers()" />
+        }
+        @default {
+          @if (canEdit()) {
+            <div class="detail-page__tab-toolbar">
+              <app-button variant="outline" size="small" icon="ic_add" (clicked)="openAdd()"
+                >Add Participant</app-button
+              >
             </div>
           }
-        }
-      </ng-template>
-    </app-data-table>
 
-    @if (participants.total() > 0) {
-      <app-pagination
-        [page]="participants.query().page"
-        [pageSize]="pageSize"
-        [total]="participants.total()"
-        (pageChange)="participants.goToPage($event)"
-      />
-    }
+          @if (participants.failed()) {
+            <div class="detail-page__error" role="alert">
+              <span>Couldn't load the participants. Please try again.</span>
+              <app-button variant="outline" size="small" (clicked)="participants.reload()">Try again</app-button>
+            </div>
+          }
+
+          <app-data-table
+            label="Participants"
+            [columns]="columns"
+            [rows]="participants.rows()"
+            [loading]="participants.loading()"
+            [skeletonRowCount]="pageSize"
+            [emptyMessage]="emptyMessage()"
+          >
+            <ng-template let-row let-key="key">
+              @switch (key) {
+                @case ('name') {
+                  @let name = fullName(row);
+                  <div class="detail-page__name-cell">
+                    <app-entity-avatar [name]="name" [seed]="row.id" />
+                    <a class="detail-page__row-link" [routerLink]="linkTo(row)" skipLocationChange [title]="name">{{
+                      name
+                    }}</a>
+                  </div>
+                }
+              }
+            </ng-template>
+          </app-data-table>
+
+          @if (participants.total() > 0) {
+            <app-pagination
+              [page]="participants.query().page"
+              [pageSize]="pageSize"
+              [total]="participants.total()"
+              (pageChange)="participants.goToPage($event)"
+            />
+          }
+        }
+      }
+    </div>
   }
 </div>
 

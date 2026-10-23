@@ -8,11 +8,15 @@ import { DataTableColumn, DataTableComponent } from '../../common/components/dat
 import { DetailField, DetailHeaderComponent } from '../../common/components/detail-header/detail-header.component';
 import { EntityAvatarComponent } from '../../common/components/entity-avatar/entity-avatar.component';
 import { PaginationComponent } from '../../common/components/pagination/pagination.component';
+import { TabItem, TabsComponent } from '../../common/components/tabs/tabs.component';
 import { formatDateTime } from '../../common/utils/datetime.util';
 import { createPagedList } from '../../common/utils/paged-list.util';
 import { createReloadable } from '../../common/utils/reloadable.util';
 import { AuthService } from '../../core/auth/services/auth.service';
 import { ParticipantFormDialogComponent } from '../components/participant-form-dialog/participant-form-dialog.component';
+import { SquadPanelComponent } from '../components/squad-panel/squad-panel.component';
+import { StaffPanelComponent } from '../components/staff-panel/staff-panel.component';
+import { MEMBER_EDITOR_ROLES } from '../constants/members.constants';
 import { CATALOGUE_EDITOR_ROLES, DEFAULT_CHILD_QUERY, SPORTS_PAGE_SIZE } from '../constants/sports.constants';
 import { ChildListQuery, NewParticipant, Participant } from '../models/hierarchy.model';
 import { HierarchyApiService } from '../services/hierarchy-api.service';
@@ -32,6 +36,9 @@ import { governingBodyLink, participantLink, sportLink } from '../utils/hierarch
     PaginationComponent,
     ParticipantFormDialogComponent,
     RouterLink,
+    SquadPanelComponent,
+    StaffPanelComponent,
+    TabsComponent,
   ],
   templateUrl: './organisation-detail.component.html',
   styleUrl: './organisation-detail.component.scss',
@@ -50,6 +57,15 @@ export class OrganisationDetailPage {
 
   readonly pageSize = SPORTS_PAGE_SIZE;
   readonly canEdit = computed(() => this.authService.hasAnyRole(CATALOGUE_EDITOR_ROLES));
+  // Squad and staff have their own writers: ADMIN and ORG.
+  readonly canEditMembers = computed(() => this.authService.hasAnyRole(MEMBER_EDITOR_ROLES));
+  readonly tabs: TabItem[] = [
+    { id: 'participants', label: 'Participants' },
+    { id: 'squad', label: 'Squad' },
+    { id: 'staff', label: 'Staff' },
+  ];
+  readonly activeTab = signal('participants');
+  readonly activeTabLabel = computed(() => this.tabs.find((tab) => tab.id === this.activeTab())?.label ?? '');
   // Figma's "Participants" table. Team, position and jersey number are on the participant's own page.
   readonly columns: DataTableColumn[] = [{ key: 'name', label: 'Participants' }];
 

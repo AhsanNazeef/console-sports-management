@@ -1,0 +1,86 @@
+<app-modal [open]="open()" [heading]="heading()" (closed)="cancelled.emit()">
+  @if (open()) {
+    <form class="staff-form" novalidate (ngSubmit)="onSubmit()">
+      <div class="staff-form__fields">
+        <div class="staff-form__row">
+          <div class="staff-form__field">
+            <label class="staff-form__label" for="staff-member-name">Name</label>
+            <app-text-input
+              inputId="staff-member-name"
+              name="name"
+              placeholder="Full name"
+              [error]="shownError(nameModel, nameError())"
+              [ngModel]="name()"
+              (ngModelChange)="name.set($event)"
+              #nameModel="ngModel"
+            />
+          </div>
+          <div class="staff-form__field">
+            <label class="staff-form__label" for="staff-member-role">Role</label>
+            <app-text-input
+              inputId="staff-member-role"
+              name="roleTitle"
+              placeholder="Role title"
+              [error]="shownError(roleModel, roleTitleError())"
+              [ngModel]="roleTitle()"
+              (ngModelChange)="roleTitle.set($event)"
+              #roleModel="ngModel"
+            />
+          </div>
+        </div>
+
+        <div class="staff-form__field">
+          <label class="staff-form__label" for="staff-member-category">Section</label>
+          <select
+            id="staff-member-category"
+            class="staff-form__select"
+            name="category"
+            [ngModel]="categoryChoice()"
+            (ngModelChange)="categoryChoice.set($event)"
+          >
+            @for (option of categories; track option.id) {
+              <option [value]="option.id">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="staff-form__row">
+          <div class="staff-form__field">
+            <label class="staff-form__label" for="staff-member-nationality">Nationality</label>
+            <app-text-input
+              inputId="staff-member-nationality"
+              name="nationality"
+              placeholder="Optional"
+              [ngModel]="nationality()"
+              (ngModelChange)="nationality.set($event)"
+            />
+          </div>
+          <div class="staff-form__field">
+            <label class="staff-form__label" for="staff-member-photo">Photo URL</label>
+            <app-text-input
+              inputId="staff-member-photo"
+              type="url"
+              name="photoUrl"
+              placeholder="Optional"
+              [error]="shownError(photoModel, photoUrlError())"
+              [ngModel]="photoUrl()"
+              (ngModelChange)="photoUrl.set($event)"
+              #photoModel="ngModel"
+            />
+          </div>
+        </div>
+      </div>
+
+      @if (error(); as message) {
+        <p class="staff-form__error" role="alert">{{ message }}</p>
+      }
+
+      <div class="staff-form__actions">
+        <app-button variant="outline" [fullWidth]="true" (clicked)="cancelled.emit()">Cancel</app-button>
+        <app-button type="submit" [fullWidth]="true" [disabled]="!canSave()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </app-button>
+      </div>
+    </form>
+  }
+</app-modal>

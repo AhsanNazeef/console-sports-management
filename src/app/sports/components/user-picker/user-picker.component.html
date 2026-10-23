@@ -1,0 +1,54 @@
+<div class="user-picker">
+  <app-text-input
+    [inputId]="inputId()"
+    autocomplete="off"
+    placeholder="Search users by name or email"
+    [ngModel]="term()"
+    [ngModelOptions]="{ standalone: true }"
+    (ngModelChange)="term.set($event)"
+  />
+
+  @let current = search();
+  @switch (current.status) {
+    @case ('searching') {
+      <p class="user-picker__hint">Searching…</p>
+    }
+    @case ('failed') {
+      <p class="user-picker__hint user-picker__hint--error">Couldn't search users. Try again.</p>
+    }
+    @case ('done') {
+      @if (current.users.length > 0) {
+        <ul class="user-picker__results" aria-label="Matching users">
+          @for (user of current.users; track user.id) {
+            @let name = nameOf(user);
+            <li>
+              <button
+                type="button"
+                class="user-picker__option"
+                [class.user-picker__option--selected]="user.id === selected()?.id"
+                [attr.aria-pressed]="user.id === selected()?.id"
+                [attr.aria-label]="name + ', ' + user.email"
+                (click)="selected.set(user)"
+              >
+                <app-entity-avatar [name]="name" [imageUrl]="user.avatarUrl" [seed]="user.id" [photo]="true" />
+                <span class="user-picker__name">{{ name }}</span>
+                <span class="user-picker__email">{{ user.email }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="user-picker__hint">No users match “{{ current.term }}”.</p>
+      }
+    }
+    @default {
+      <p class="user-picker__hint">Type at least {{ minLength }} letters of a name or email.</p>
+    }
+  }
+
+  @if (selected(); as user) {
+    <p class="user-picker__selected">
+      Selected: <strong>{{ nameOf(user) }}</strong> ({{ user.email }})
+    </p>
+  }
+</div>

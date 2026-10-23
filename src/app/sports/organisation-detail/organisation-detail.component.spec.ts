@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { listOf, sampleOrganisation, sampleParticipant, sampleSport } from '../../../testing/hierarchy-fixtures';
 import { AuthService } from '../../core/auth/services/auth.service';
 import { HierarchyApiService } from '../services/hierarchy-api.service';
+import { MembersApiService } from '../services/members-api.service';
 import { SportsApiService } from '../services/sports-api.service';
 import { OrganisationDetailPage } from './organisation-detail.component';
 
@@ -17,7 +18,10 @@ describe('OrganisationDetailPage', () => {
     createParticipant$: ReturnType<typeof vi.fn>;
   };
 
+  let members: { getSquad$: ReturnType<typeof vi.fn>; getStaffGroups$: ReturnType<typeof vi.fn> };
+
   async function setUp(governingBodyId = 'g1'): Promise<void> {
+    members = { getSquad$: vi.fn(() => of([])), getStaffGroups$: vi.fn(() => of([])) };
     api = {
       getOrganisation$: vi.fn(() => of(sampleOrganisation())),
       getParticipants$: vi.fn(() => of(listOf([sampleParticipant()]))),
@@ -30,6 +34,7 @@ describe('OrganisationDetailPage', () => {
         { provide: HierarchyApiService, useValue: api },
         { provide: SportsApiService, useValue: { getSport$: () => of(sampleSport()) } },
         { provide: AuthService, useValue: { hasAnyRole: () => true } },
+        { provide: MembersApiService, useValue: members },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(OrganisationDetailPage);
@@ -98,6 +103,26 @@ describe('OrganisationDetailPage', () => {
     });
     expect(api.getParticipants$.mock.calls.length).toBeGreaterThan(1);
     expect(api.getOrganisation$).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows the participants first and the squad and staff on their own tabs', async () => {
+    await setUp();
+    const tabs = Array.from(element.querySelectorAll('[role="tab"]')) as HTMLButtonElement[];
+    expect(tabs.map((tab) => tab.textContent?.trim())).toEqual(['Participants', 'Squad', 'Staff']);
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+    expect(element.querySelector('[role="tabpanel"]')?.getAttribute('aria-label')).toBe('Participants');
+    expect(members.getSquad$).not.toHaveBeenCalled();
+
+    tabs[1].click();
+    await settle();
+    expect(element.querySelector('app-squad-panel')).toBeTruthy();
+    expect(element.querySelector('app-data-table[label="Participants"]')).toBeNull();
+    expect(members.getSquad$).toHaveBeenCalledWith('o1');
+
+    tabs[2].click();
+    await settle();
+    expect(element.querySelector('app-staff-panel')).toBeTruthy();
+    expect(members.getStaffGroups$).toHaveBeenCalledWith('o1');
   });
 
   it('treats an organisation under another governing body as not found', async () => {

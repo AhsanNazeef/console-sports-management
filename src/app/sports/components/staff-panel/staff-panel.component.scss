@@ -1,0 +1,130 @@
+@use '../../../common/styles/page';
+@use '../../../common/styles/typography' as type;
+
+// Figma Organisation panel "Staff" page: bordered sections of member cards.
+.staff-panel {
+  @include page.page;
+
+  &__error {
+    @include page.error-banner;
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    border: 1px solid var(--color-white-10);
+    border-radius: 12px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 26px;
+  }
+
+  &__title {
+    flex: 1;
+    margin: 0;
+    color: var(--color-white);
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: normal;
+  }
+
+  &__cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 8px;
+    border-radius: 12px;
+    background-color: var(--color-white-3);
+  }
+
+  &__photo {
+    box-sizing: border-box;
+    overflow: hidden;
+    border: 1px solid var(--color-white-10);
+    border-radius: var(--radius-md);
+  }
+
+  &__details {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  &__name,
+  &__role,
+  &__nationality {
+    margin: 0;
+    overflow: hidden;
+    font-family: var(--font-body);
+    font-size: 12px;
+    line-height: normal;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__name {
+    color: var(--color-white);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  &__role {
+    color: var(--color-white-54);
+  }
+
+  &__nationality {
+    color: var(--color-white);
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    align-self: flex-start;
+    gap: 12px;
+  }
+
+  &__action {
+    @include page.row-action;
+  }
+
+  &__empty {
+    @include type.label-large;
+    margin: 0;
+    color: var(--color-white-54);
+  }
+
+  &__status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  &__dialog-error {
+    @include type.label-large;
+    margin: 0;
+    color: var(--color-red);
+    text-align: center;
+  }
+}

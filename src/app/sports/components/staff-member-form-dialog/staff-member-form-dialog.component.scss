@@ -1,0 +1,41 @@
+@use '../../../common/styles/breakpoints' as bp;
+@use '../../../common/styles/form';
+
+.staff-form {
+  @include form.form;
+
+  &__fields {
+    @include form.fields;
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+
+    @include bp.phone {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+  }
+
+  &__field {
+    @include form.field;
+  }
+
+  &__label {
+    @include form.label;
+  }
+
+  &__select {
+    @include form.select;
+  }
+
+  &__error {
+    @include form.error;
+  }
+
+  &__actions {
+    @include form.actions;
+  }
+}

@@ -1,0 +1,114 @@
+<div class="staff-panel" [attr.aria-busy]="staff.loading()">
+  @if (failed()) {
+    <div class="staff-panel__error" role="alert">
+      <span>Couldn't load the staff. Please try again.</span>
+      <app-button variant="outline" size="small" (clicked)="staff.reload()">Try again</app-button>
+    </div>
+  }
+
+  @if (staff.value(); as groups) {
+    @for (group of groups; track group.category) {
+      <section class="staff-panel__section" [attr.aria-labelledby]="'staff-section-' + group.category">
+        <div class="staff-panel__header">
+          <h3 class="staff-panel__title" [id]="'staff-section-' + group.category">{{ labels[group.category] }}</h3>
+          @if (canEdit()) {
+            <app-button variant="outline" size="small" icon="ic_add" (clicked)="openAdd(group.category)">
+              Add Member
+            </app-button>
+          }
+        </div>
+
+        @if (group.members.length > 0) {
+          <ul class="staff-panel__cards">
+            @for (member of group.members; track member.id) {
+              <li class="staff-panel__card">
+                <app-entity-avatar
+                  class="staff-panel__photo"
+                  [name]="member.name"
+                  [imageUrl]="member.photoUrl"
+                  [seed]="member.id"
+                  [photo]="true"
+                  shape="rounded"
+                  [size]="63"
+                />
+                <div class="staff-panel__details">
+                  <p class="staff-panel__name">{{ member.name }}</p>
+                  <p class="staff-panel__role">{{ member.roleTitle }}</p>
+                  <p class="staff-panel__nationality">{{ member.nationality || '—' }}</p>
+                </div>
+                @if (canEdit()) {
+                  <div class="staff-panel__actions">
+                    <button
+                      type="button"
+                      class="staff-panel__action"
+                      [attr.aria-label]="'Edit ' + member.name"
+                      (click)="openEdit(member)"
+                    >
+                      <img src="assets/icons/ic_edit.svg" width="16" height="16" alt="" aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      class="staff-panel__action"
+                      [attr.aria-label]="'Remove ' + member.name"
+                      (click)="askToRemove(member)"
+                    >
+                      <img src="assets/icons/ic_delete.svg" width="16" height="16" alt="" aria-hidden="true" />
+                    </button>
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="staff-panel__empty">No members yet.</p>
+        }
+      </section>
+    }
+  } @else if (staff.loading()) {
+    <!-- First load: the three sections with placeholder cards, so the page keeps its shape. -->
+    @for (category of placeholderSections; track category) {
+      <section class="staff-panel__section" aria-hidden="true">
+        <div class="staff-panel__header">
+          <p class="staff-panel__title">{{ labels[category] }}</p>
+        </div>
+        <div class="staff-panel__cards">
+          <div class="staff-panel__card">
+            <app-skeleton width="63px" height="63px" />
+            <div class="staff-panel__details">
+              <app-skeleton width="60%" />
+              <app-skeleton width="40%" />
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+    <output class="staff-panel__status">Loading staff…</output>
+  }
+</div>
+
+<app-staff-member-form-dialog
+  [open]="formOpen()"
+  [member]="editing()"
+  [category]="addingTo()"
+  [saving]="isSaving()"
+  [error]="actionError()"
+  (save)="save($event)"
+  (cancelled)="closeForm()"
+/>
+
+<app-dialog
+  icon="ic_delete"
+  primaryLabel="Remove"
+  secondaryLabel="Cancel"
+  [open]="!!removing()"
+  [heading]="'Remove ' + (removing()?.name ?? '') + ' from the staff?'"
+  description="They are removed from this club's staff for everyone."
+  [primaryDisabled]="isSaving()"
+  (primary)="remove()"
+  (secondary)="cancelRemove()"
+  (closed)="cancelRemove()"
+>
+  @if (actionError(); as message) {
+    <p class="staff-panel__dialog-error" role="alert">{{ message }}</p>
+  }
+</app-dialog>

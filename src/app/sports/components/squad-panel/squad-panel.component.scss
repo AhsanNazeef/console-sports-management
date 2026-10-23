@@ -1,0 +1,39 @@
+@use '../../../common/styles/page';
+@use '../../../common/styles/typography' as type;
+
+.squad-panel {
+  @include page.page;
+
+  &__toolbar {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  &__error {
+    @include page.error-banner;
+  }
+
+  &__player {
+    @include page.name-cell;
+  }
+
+  &__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__actions {
+    @include page.row-actions;
+  }
+
+  &__action {
+    @include page.row-action;
+  }
+
+  &__dialog-error {
+    @include type.label-large;
+    margin: 0;
+    color: var(--color-red);
+    text-align: center;
+  }
+}

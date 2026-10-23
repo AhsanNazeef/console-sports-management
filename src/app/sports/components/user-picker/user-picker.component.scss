@@ -1,0 +1,75 @@
+@use '../../../common/styles/typography' as type;
+
+.user-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &__hint,
+  &__selected {
+    @include type.label-large;
+    margin: 0;
+    padding: 0 8px;
+    color: var(--color-white-54);
+
+    &--error {
+      color: var(--color-red);
+    }
+  }
+
+  &__selected {
+    color: var(--color-white);
+  }
+
+  &__results {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 176px;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+
+  &__option {
+    @include type.label-large;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background-color: var(--color-white-3);
+    color: var(--color-white);
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--color-white-10);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-white);
+      outline-offset: -2px;
+    }
+
+    &--selected {
+      border-color: var(--color-yellow);
+    }
+  }
+
+  &__name {
+    flex-shrink: 0;
+  }
+
+  &__email {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--color-white-54);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

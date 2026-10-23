@@ -1,0 +1,96 @@
+<div class="squad-panel">
+  @if (canEdit()) {
+    <div class="squad-panel__toolbar">
+      <app-button variant="outline" size="small" icon="ic_add" (clicked)="openAdd()">Add Squad Member</app-button>
+    </div>
+  }
+
+  @if (failed()) {
+    <div class="squad-panel__error" role="alert">
+      <span>Couldn't load the squad. Please try again.</span>
+      <app-button variant="outline" size="small" (clicked)="squad.reload()">Try again</app-button>
+    </div>
+  }
+
+  <app-data-table
+    label="Squad"
+    [columns]="columns()"
+    [rows]="squad.value() ?? []"
+    [loading]="squad.loading()"
+    [skeletonRowCount]="5"
+    minWidth="640px"
+    [emptyMessage]="emptyMessage()"
+  >
+    <ng-template let-row let-key="key">
+      @switch (key) {
+        @case ('player') {
+          <div class="squad-panel__player">
+            <app-entity-avatar
+              [name]="row.displayName"
+              [imageUrl]="row.photoUrl"
+              [seed]="row.userId"
+              [photo]="true"
+              [size]="24"
+            />
+            <span class="squad-panel__name" [title]="row.displayName">{{ row.displayName }}</span>
+          </div>
+        }
+        @case ('position') {
+          {{ row.position }}
+        }
+        @case ('age') {
+          {{ row.age ?? '—' }}
+        }
+        @case ('agreementEnd') {
+          {{ formatDate(row.agreementEnd) ?? '—' }}
+        }
+        @case ('actions') {
+          <div class="squad-panel__actions">
+            <button
+              type="button"
+              class="squad-panel__action"
+              [attr.aria-label]="'Edit ' + row.displayName"
+              (click)="openEdit(row)"
+            >
+              <img src="assets/icons/ic_edit.svg" width="16" height="16" alt="" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              class="squad-panel__action"
+              [attr.aria-label]="'Remove ' + row.displayName"
+              (click)="askToRemove(row)"
+            >
+              <img src="assets/icons/ic_delete.svg" width="16" height="16" alt="" aria-hidden="true" />
+            </button>
+          </div>
+        }
+      }
+    </ng-template>
+  </app-data-table>
+</div>
+
+<app-squad-member-form-dialog
+  [open]="formOpen()"
+  [member]="editing()"
+  [saving]="isSaving()"
+  [error]="actionError()"
+  (save)="save($event)"
+  (cancelled)="closeForm()"
+/>
+
+<app-dialog
+  icon="ic_delete"
+  primaryLabel="Remove"
+  secondaryLabel="Cancel"
+  [open]="!!removing()"
+  [heading]="'Remove ' + (removing()?.displayName ?? '') + ' from the squad?'"
+  description="Their user account stays. Only their place in this squad is removed."
+  [primaryDisabled]="isSaving()"
+  (primary)="remove()"
+  (secondary)="cancelRemove()"
+  (closed)="cancelRemove()"
+>
+  @if (actionError(); as message) {
+    <p class="squad-panel__dialog-error" role="alert">{{ message }}</p>
+  }
+</app-dialog>
