@@ -1,0 +1,59 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { NavGroup } from '../models/navigation.model';
+import { SidebarComponent } from './sidebar.component';
+
+const GROUPS: NavGroup[] = [
+  { id: 'match', label: 'Match Management', items: [{ label: 'Sports', path: '/sports', icon: 'ic_sport' }] },
+  { id: 'system', label: 'System', items: [{ label: 'Users', path: '/users', icon: 'ic_users' }] },
+];
+
+describe('SidebarComponent', () => {
+  let fixture: ComponentFixture<SidebarComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [SidebarComponent],
+      providers: [provideRouter([])],
+    }).compileComponents();
+    fixture = TestBed.createComponent(SidebarComponent);
+    fixture.componentRef.setInput('groups', GROUPS);
+    fixture.detectChanges();
+  });
+
+  const queryAll = (selector: string): HTMLElement[] =>
+    Array.from(fixture.nativeElement.querySelectorAll(selector) as NodeListOf<HTMLElement>);
+
+  it('renders each group with links to its items', () => {
+    expect(queryAll('.sidebar__group-toggle').map((el) => el.textContent?.trim())).toEqual([
+      'Match Management',
+      'System',
+    ]);
+    expect(queryAll('.sidebar__item').map((el) => el.getAttribute('href'))).toEqual(['/sports', '/users']);
+  });
+
+  it('folds and unfolds a group', () => {
+    const toggle = queryAll('.sidebar__group-toggle')[0];
+    toggle.click();
+    fixture.detectChanges();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(queryAll('.sidebar__items')[0].hidden).toBe(true);
+
+    toggle.click();
+    fixture.detectChanges();
+    expect(queryAll('.sidebar__items')[0].hidden).toBe(false);
+  });
+
+  it('asks to collapse, and shows only icons when collapsed', () => {
+    let collapsed: boolean | undefined;
+    fixture.componentInstance.collapsedChange.subscribe((value) => (collapsed = value));
+    queryAll('.sidebar__collapse')[0].click();
+    expect(collapsed).toBe(true);
+
+    fixture.componentRef.setInput('collapsed', true);
+    fixture.detectChanges();
+    expect(queryAll('.sidebar--collapsed').length).toBe(1);
+    expect(queryAll('.sidebar__group-toggle').length).toBe(0);
+    expect(queryAll('.sidebar__item')[0].getAttribute('title')).toBe('Sports');
+  });
+});

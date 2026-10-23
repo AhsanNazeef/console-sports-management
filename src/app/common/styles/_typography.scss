@@ -7,6 +7,30 @@
   line-height: 32px;
 }
 
+@mixin headline-small {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+// Inter styles used by the console screens (sidebar and header).
+@mixin title-large {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+@mixin title-caps {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
 @mixin body-large {
   font-family: var(--font-ui);
   font-size: 16px;

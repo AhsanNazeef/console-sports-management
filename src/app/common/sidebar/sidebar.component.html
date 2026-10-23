@@ -1,0 +1,60 @@
+<aside class="sidebar" [class.sidebar--collapsed]="collapsed()">
+  <div class="sidebar__logo">
+    @if (collapsed()) {
+      <img src="assets/icons/ic_buzzer_logo.svg" width="23" height="24" alt="Buzzer Admin Console" />
+    } @else {
+      <img src="assets/images/logo_admin_console.svg" width="100" height="24" alt="Buzzer Admin Console" />
+    }
+    <button
+      type="button"
+      class="sidebar__collapse"
+      [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+      [attr.aria-expanded]="!collapsed()"
+      (click)="toggleCollapsed()"
+    >
+      <img src="assets/icons/ic_collapse.svg" width="24" height="24" alt="" aria-hidden="true" />
+    </button>
+  </div>
+
+  <nav class="sidebar__nav" aria-label="Main navigation">
+    @for (group of groups(); track group.id) {
+      <section class="sidebar__group">
+        @if (!collapsed()) {
+          <button
+            type="button"
+            class="sidebar__group-toggle"
+            [attr.aria-expanded]="isGroupOpen(group.id)"
+            [attr.aria-controls]="'nav-group-' + group.id"
+            (click)="toggleGroup(group.id)"
+          >
+            {{ group.label }}
+            <img
+              class="sidebar__group-icon"
+              src="assets/icons/ic_dropdown.svg"
+              width="24"
+              height="24"
+              alt=""
+              aria-hidden="true"
+            />
+          </button>
+        }
+        <ul class="sidebar__items" [id]="'nav-group-' + group.id" [hidden]="!collapsed() && !isGroupOpen(group.id)">
+          @for (item of group.items; track item.path) {
+            <li>
+              <a
+                class="sidebar__item"
+                routerLinkActive="sidebar__item--active"
+                ariaCurrentWhenActive="page"
+                [routerLink]="item.path"
+                [attr.title]="collapsed() ? item.label : null"
+              >
+                <img [src]="'assets/icons/' + item.icon + '.svg'" width="24" height="24" alt="" aria-hidden="true" />
+                <span class="sidebar__item-label">{{ item.label }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  </nav>
+</aside>

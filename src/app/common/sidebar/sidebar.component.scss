@@ -1,0 +1,133 @@
+@use '../styles/typography' as type;
+
+:host {
+  display: block;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 311px;
+  height: 100%;
+  padding: 0 16px;
+  border-right: 1px solid var(--color-white-10);
+  background-color: var(--color-base);
+
+  &__logo {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+  }
+
+  &__collapse,
+  &__group-toggle {
+    border: 0;
+    background: none;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-white);
+      outline-offset: 2px;
+    }
+  }
+
+  &__collapse {
+    display: flex;
+    padding: 0;
+  }
+
+  &__nav {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+    padding-bottom: 16px;
+    overflow-y: auto;
+  }
+
+  &__group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__group-toggle {
+    @include type.title-caps;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 16px;
+    color: var(--color-white-54);
+  }
+
+  &__group-toggle[aria-expanded='false'] &__group-icon {
+    transform: rotate(-90deg);
+  }
+
+  &__items {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  &__item {
+    @include type.title-large;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-sizing: border-box;
+    height: 48px;
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    color: var(--color-white);
+    text-decoration: none;
+    white-space: nowrap;
+
+    &:hover {
+      background-color: var(--color-white-3);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-white);
+      outline-offset: -2px;
+    }
+
+    &--active,
+    &--active:hover {
+      background-color: var(--color-white-10);
+    }
+  }
+
+  &--collapsed {
+    width: 88px;
+  }
+
+  &--collapsed &__collapse img {
+    transform: rotate(180deg);
+  }
+
+  &--collapsed &__group + &__group {
+    padding-top: 8px;
+    border-top: 1px solid var(--color-white-10);
+  }
+
+  // Hidden on screen but kept as the link's accessible name.
+  &--collapsed &__item-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
