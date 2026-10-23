@@ -4,6 +4,19 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+export interface PageMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface ApiListResponse<T> {
+  success: true;
+  data: T[];
+  meta: PageMeta;
+}
+
 export interface ApiErrorBody {
   success: false;
   error: {
@@ -11,3 +24,5 @@ export interface ApiErrorBody {
     details?: Record<string, string[]> | null;
   };
 }
+
+export type SortOrder = 'asc' | 'desc';
