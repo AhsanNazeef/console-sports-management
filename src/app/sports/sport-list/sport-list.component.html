@@ -1,0 +1,64 @@
+<div class="sport-list">
+  <div class="sport-list__toolbar">
+    <app-breadcrumbs [items]="breadcrumbs" />
+    @if (canEdit()) {
+      <app-button variant="outline" size="small" icon="ic_add" (clicked)="openAdd()">Add Sport</app-button>
+    }
+  </div>
+
+  <section class="sport-list__stats" aria-label="Catalogue totals">
+    <app-stat-card label="Sports" [value]="totals()?.sports ?? null" />
+    <app-stat-card label="Governing Bodies" [value]="totals()?.governingBodies ?? null" />
+    <app-stat-card label="Organisations" [value]="totals()?.organisations ?? null" />
+    <app-stat-card label="Participants" [value]="totals()?.participants ?? null" />
+  </section>
+
+  @if (loadError(); as message) {
+    <div class="sport-list__error" role="alert">
+      <span>{{ message }}</span>
+      <app-button variant="outline" size="small" (clicked)="retry()">Try again</app-button>
+    </div>
+  }
+
+  <app-sports-table
+    [sports]="sports()"
+    [canEdit]="canEdit()"
+    [sortBy]="query().sortBy"
+    [sortOrder]="query().sortOrder"
+    [loading]="isLoading()"
+    [emptyMessage]="emptyMessage()"
+    (sortByName)="cycleNameSort()"
+    (edit)="openEdit($event)"
+    (remove)="askToDelete($event)"
+  />
+
+  @if (total() > 0) {
+    <app-pagination [page]="query().page" [pageSize]="pageSize" [total]="total()" (pageChange)="goToPage($event)" />
+  }
+</div>
+
+<app-sport-form-dialog
+  [open]="formOpen()"
+  [sport]="editing()"
+  [saving]="isSaving()"
+  [error]="actionError()"
+  (save)="saveSport($event)"
+  (cancelled)="closeForm()"
+/>
+
+<app-dialog
+  icon="ic_delete"
+  primaryLabel="Delete"
+  secondaryLabel="Cancel"
+  [open]="!!deleting()"
+  [heading]="'Delete ' + (deleting()?.name ?? '') + '?'"
+  description="It disappears from every list for the whole team. Its name stays reserved."
+  [primaryDisabled]="isSaving()"
+  (primary)="deleteSport()"
+  (secondary)="cancelDelete()"
+  (closed)="cancelDelete()"
+>
+  @if (actionError(); as message) {
+    <p class="sport-list__dialog-error" role="alert">{{ message }}</p>
+  }
+</app-dialog>

@@ -1,0 +1,83 @@
+<div class="sports-table" [class.sports-table--loading]="loading()" [attr.aria-busy]="loading()">
+  <table class="sports-table__table">
+    <thead>
+      <tr>
+        <th scope="col" class="sports-table__head" [attr.aria-sort]="nameSort()">
+          <button type="button" class="sports-table__sort" (click)="sortByName.emit()">
+            Sport
+            <img
+              class="sports-table__sort-icon"
+              [class.sports-table__sort-icon--active]="nameSort() !== 'none'"
+              [class.sports-table__sort-icon--asc]="nameSort() === 'ascending'"
+              src="assets/icons/ic_list_switch.svg"
+              width="12"
+              height="12"
+              alt=""
+              aria-hidden="true"
+            />
+          </button>
+        </th>
+        <th scope="col" class="sports-table__head">Governing Bodies</th>
+        <th scope="col" class="sports-table__head">Organisations</th>
+        <th scope="col" class="sports-table__head">Participants</th>
+        @if (canEdit()) {
+          <th scope="col" class="sports-table__head sports-table__head--actions">Actions</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (sport of sports(); track sport.id) {
+        <tr class="sports-table__row">
+          <td class="sports-table__cell">
+            <div class="sports-table__sport">
+              @if (showIcon(sport)) {
+                <img
+                  class="sports-table__icon"
+                  [src]="sport.iconUrl"
+                  width="20"
+                  height="20"
+                  alt=""
+                  (error)="markIconBroken(sport.id)"
+                />
+              } @else {
+                <span class="sports-table__badge" [style.background-color]="accentFor(sport.id)" aria-hidden="true">
+                  {{ sport.name.charAt(0).toUpperCase() }}
+                </span>
+              }
+              <span class="sports-table__name" [title]="sport.name">{{ sport.name }}</span>
+            </div>
+          </td>
+          <td class="sports-table__cell sports-table__cell--shaded">{{ sport.governingBodyCount }}</td>
+          <td class="sports-table__cell">{{ sport.organizationCount }}</td>
+          <td class="sports-table__cell sports-table__cell--shaded">{{ sport.participantCount }}</td>
+          @if (canEdit()) {
+            <td class="sports-table__cell">
+              <div class="sports-table__actions">
+                <button
+                  type="button"
+                  class="sports-table__action"
+                  [attr.aria-label]="'Edit ' + sport.name"
+                  (click)="edit.emit(sport)"
+                >
+                  <img src="assets/icons/ic_edit.svg" width="16" height="16" alt="" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  class="sports-table__action"
+                  [attr.aria-label]="'Delete ' + sport.name"
+                  (click)="remove.emit(sport)"
+                >
+                  <img src="assets/icons/ic_delete.svg" width="16" height="16" alt="" aria-hidden="true" />
+                </button>
+              </div>
+            </td>
+          }
+        </tr>
+      } @empty {
+        <tr>
+          <td class="sports-table__empty" [attr.colspan]="canEdit() ? 5 : 4">{{ emptyMessage() }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

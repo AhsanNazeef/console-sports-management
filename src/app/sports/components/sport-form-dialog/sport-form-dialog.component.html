@@ -1,0 +1,68 @@
+<app-modal [open]="open()" [heading]="sport() ? 'Edit Sport' : 'Add Sport'" (closed)="cancelled.emit()">
+  @if (open()) {
+    <form class="sport-form" novalidate (ngSubmit)="onSubmit()">
+      <div class="sport-form__fields">
+        <div class="sport-form__field">
+          <label class="sport-form__label" for="sport-name">Name</label>
+          <app-text-input
+            inputId="sport-name"
+            name="name"
+            placeholder="Sport Name"
+            [error]="shownError(nameModel, nameError())"
+            [ngModel]="name()"
+            (ngModelChange)="name.set($event)"
+            #nameModel="ngModel"
+          />
+        </div>
+
+        <div class="sport-form__field">
+          <label class="sport-form__label" for="sport-description">Description</label>
+          <textarea
+            id="sport-description"
+            class="sport-form__textarea"
+            name="description"
+            rows="3"
+            placeholder="What the sport is (optional)"
+            [ngModel]="description()"
+            (ngModelChange)="description.set($event)"
+          ></textarea>
+        </div>
+
+        <div class="sport-form__field">
+          <label class="sport-form__label" for="sport-icon">Icon URL</label>
+          <div class="sport-form__icon-row">
+            <span class="sport-form__icon-preview" [class.sport-form__icon-preview--filled]="previewUrl()">
+              @if (previewUrl(); as url) {
+                <img [src]="url" width="20" height="20" alt="" aria-hidden="true" (error)="iconFailed.set(true)" />
+              } @else {
+                <img src="assets/icons/ic_add.svg" width="20" height="20" alt="" aria-hidden="true" />
+              }
+            </span>
+            <app-text-input
+              class="sport-form__icon-input"
+              inputId="sport-icon"
+              name="iconUrl"
+              type="url"
+              placeholder="https://… (optional)"
+              [error]="shownError(iconModel, iconUrlError())"
+              [ngModel]="iconUrl()"
+              (ngModelChange)="iconUrl.set($event)"
+              #iconModel="ngModel"
+            />
+          </div>
+        </div>
+      </div>
+
+      @if (error(); as message) {
+        <p class="sport-form__error" role="alert">{{ message }}</p>
+      }
+
+      <div class="sport-form__actions">
+        <app-button variant="outline" [fullWidth]="true" (clicked)="cancelled.emit()">Cancel</app-button>
+        <app-button type="submit" [fullWidth]="true" [disabled]="!canSave()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </app-button>
+      </div>
+    </form>
+  }
+</app-modal>

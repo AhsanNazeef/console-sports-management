@@ -18,7 +18,11 @@ export const routes: Routes = [
       { path: 'dashboard', title: 'Dashboard', loadComponent: comingSoon },
       { path: 'matches', title: 'Live Matches', loadComponent: comingSoon },
       { path: 'tournaments', title: 'Tournaments', loadComponent: comingSoon },
-      { path: 'sports', title: 'Sport Management', loadComponent: comingSoon },
+      {
+        path: 'sports',
+        title: 'Sport Management',
+        loadChildren: () => import('./sports/sports.routes').then((m) => m.sportsRoutes),
+      },
       { path: 'posts', title: 'Posts', loadComponent: comingSoon },
       { path: 'templates', title: 'Templates', loadComponent: comingSoon },
       { path: 'magazines', title: 'Magazines', loadComponent: comingSoon },

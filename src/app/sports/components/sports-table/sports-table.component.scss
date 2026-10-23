@@ -1,0 +1,154 @@
+:host {
+  display: block;
+}
+
+.sports-table {
+  overflow-x: auto;
+  border: 1px solid var(--color-white-10);
+  border-radius: var(--radius-md);
+  transition: opacity 0.15s ease;
+
+  &--loading {
+    opacity: 0.6;
+  }
+
+  &__table {
+    width: 100%;
+    min-width: 560px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-family: var(--font-body);
+    font-size: 12px;
+  }
+
+  &__head {
+    padding: 8px;
+    background-color: var(--color-white-10);
+    color: var(--color-white-54);
+    font-size: 10px;
+    font-weight: 400;
+    text-align: left;
+
+    &--actions {
+      width: 72px;
+    }
+  }
+
+  &__sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-white);
+      outline-offset: 2px;
+    }
+  }
+
+  &__sort-icon {
+    opacity: 0.54;
+    transition: transform 0.15s ease;
+
+    &--active {
+      opacity: 1;
+    }
+
+    &--asc {
+      transform: rotate(180deg);
+    }
+  }
+
+  &__row {
+    border-bottom: 1px solid var(--color-white-10);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  &__cell {
+    padding: 12px 8px;
+    overflow: hidden;
+    color: var(--color-white);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &--shaded {
+      background-color: var(--color-white-3);
+    }
+  }
+
+  &__sport {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  // Many sport icons are dark glyphs on a transparent background, so they sit on a white circle.
+  &__icon {
+    flex-shrink: 0;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    padding: 2px;
+    border-radius: 50%;
+    background-color: var(--color-white);
+    object-fit: contain;
+  }
+
+  &__badge {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    color: var(--color-base);
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  &__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  &__action {
+    display: flex;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: none;
+    cursor: pointer;
+    opacity: 0.85;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-white);
+      outline-offset: 2px;
+    }
+  }
+
+  &__empty {
+    padding: 24px 8px;
+    color: var(--color-white-54);
+    text-align: center;
+  }
+}

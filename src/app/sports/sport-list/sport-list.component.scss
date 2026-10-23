@@ -1,0 +1,44 @@
+@use '../../common/styles/breakpoints' as bp;
+@use '../../common/styles/typography' as type;
+
+.sport-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+
+    @include bp.phone {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  &__error {
+    @include type.label-large;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-red-20);
+    color: var(--color-red);
+  }
+
+  &__dialog-error {
+    @include type.label-large;
+    margin: 0;
+    color: var(--color-red);
+    text-align: center;
+  }
+}
