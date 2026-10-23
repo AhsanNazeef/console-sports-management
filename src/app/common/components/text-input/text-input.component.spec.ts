@@ -28,6 +28,35 @@ describe('TextInputComponent', () => {
     expect(changes).toEqual(['hello']);
   });
 
+  it('shows and hides a password with the eye button', () => {
+    fixture.componentRef.setInput('type', 'password');
+    fixture.componentRef.setInput('revealable', true);
+    fixture.detectChanges();
+    const eye = (): HTMLButtonElement => fixture.nativeElement.querySelector('.text-input__reveal');
+    expect(field().type).toBe('password');
+    expect(eye().getAttribute('aria-label')).toBe('Show password');
+
+    eye().click();
+    fixture.detectChanges();
+    expect(field().type).toBe('text');
+    expect(eye().getAttribute('aria-label')).toBe('Hide password');
+
+    eye().click();
+    fixture.detectChanges();
+    expect(field().type).toBe('password');
+  });
+
+  it('only offers the eye button on revealable password fields', () => {
+    fixture.componentRef.setInput('revealable', true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.text-input__reveal')).toBeNull();
+
+    fixture.componentRef.setInput('type', 'password');
+    fixture.componentRef.setInput('revealable', false);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.text-input__reveal')).toBeNull();
+  });
+
   it('clears the value with the clear button', () => {
     const changes: string[] = [];
     component.registerOnChange((value) => changes.push(value));

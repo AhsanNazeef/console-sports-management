@@ -8,7 +8,7 @@
     <input
       class="text-input__field"
       [id]="inputId()"
-      [type]="type()"
+      [type]="fieldType()"
       [placeholder]="placeholder()"
       [value]="value()"
       [disabled]="isDisabled()"
@@ -40,6 +40,20 @@
           alt=""
           aria-hidden="true"
         />
+      </button>
+    }
+    @if (revealable() && type() === 'password') {
+      <!-- mousedown is cancelled so the field keeps focus and the caret stays put. -->
+      <button
+        type="button"
+        class="text-input__reveal"
+        [class.text-input__reveal--on]="revealed()"
+        [attr.aria-label]="revealed() ? 'Hide password' : 'Show password'"
+        [disabled]="isDisabled()"
+        (mousedown)="$event.preventDefault()"
+        (click)="toggleRevealed()"
+      >
+        <img src="assets/icons/ic_eye.svg" width="24" height="24" alt="" aria-hidden="true" />
       </button>
     }
   </div>

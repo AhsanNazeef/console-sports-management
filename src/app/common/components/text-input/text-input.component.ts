@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, forwardRef, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, forwardRef, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export type TextInputType = 'text' | 'email' | 'password' | 'search' | 'url';
@@ -29,9 +29,13 @@ export class TextInputComponent implements ControlValueAccessor {
   readonly error = input<string | null>(null);
   readonly status = input<TextInputStatus | null>(null);
   readonly clearable = input(true);
+  // Password fields only: adds an eye button that shows or hides what was typed.
+  readonly revealable = input(false);
 
   readonly value = signal('');
   readonly isDisabled = signal(false);
+  readonly revealed = signal(false);
+  readonly fieldType = computed(() => (this.type() === 'password' && this.revealed() ? 'text' : this.type()));
 
   private onChange: (value: string) => void = () => undefined;
   private onTouched: () => void = () => undefined;
@@ -65,5 +69,9 @@ export class TextInputComponent implements ControlValueAccessor {
   clear(): void {
     this.value.set('');
     this.onChange('');
+  }
+
+  toggleRevealed(): void {
+    this.revealed.update((revealed) => !revealed);
   }
 }

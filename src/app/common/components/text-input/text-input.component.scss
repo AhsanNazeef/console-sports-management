@@ -52,6 +52,33 @@
     cursor: pointer;
   }
 
+  // Dimmed while the password is hidden, full white while it's shown (the icon set has no eye-off).
+  &__reveal {
+    display: flex;
+    flex-shrink: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: none;
+    cursor: pointer;
+    opacity: 0.54;
+    transition: opacity 0.15s ease;
+
+    &--on {
+      opacity: 1;
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.1;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-white);
+      outline-offset: 2px;
+    }
+  }
+
   &__status {
     flex-shrink: 0;
 

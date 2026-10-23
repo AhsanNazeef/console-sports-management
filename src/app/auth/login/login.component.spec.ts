@@ -9,6 +9,10 @@ describe('LoginPage', () => {
   const authService = { login$: vi.fn(), consumeMessage: vi.fn<() => string | null>() };
   let navigateByUrl: ReturnType<typeof vi.spyOn>;
 
+  // Lets pending async work (the login stream, change detection) finish.
+  const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve));
+  const text = (page: HTMLElement): string => page.textContent ?? '';
+
   async function setUp(returnUrl: string | null = null): Promise<HTMLElement> {
     authService.login$.mockReset();
     authService.consumeMessage.mockReturnValue(null);
@@ -39,11 +43,8 @@ describe('LoginPage', () => {
     type('#login-email', email);
     type('#login-password', password);
     (page.querySelector('button[type="submit"]') as HTMLButtonElement).click();
-    await TestBed.inject(Router).navigated;
-    await new Promise((resolve) => setTimeout(resolve));
+    await settle();
   }
-
-  const text = (page: HTMLElement): string => page.textContent ?? '';
 
   it('shows the Figma form: logo, email, password and Login', async () => {
     const page = await setUp();
@@ -51,6 +52,14 @@ describe('LoginPage', () => {
     expect(page.querySelector('#login-email')?.getAttribute('placeholder')).toBe('Email Address*');
     expect(page.querySelector('#login-password')?.getAttribute('type')).toBe('password');
     expect(page.querySelector('button[type="submit"]')?.textContent).toContain('Login');
+  });
+
+  it('lets the user show the password they typed', async () => {
+    const page = await setUp();
+    (page.querySelector('button[aria-label="Show password"]') as HTMLButtonElement).click();
+    await settle();
+    expect(page.querySelector('#login-password')?.getAttribute('type')).toBe('text');
+    expect(page.querySelector('button[aria-label="Hide password"]')).toBeTruthy();
   });
 
   it('validates the fields before calling the API', async () => {

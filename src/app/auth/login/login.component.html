@@ -29,6 +29,7 @@
           autocomplete="current-password"
           required
           [clearable]="false"
+          [revealable]="true"
           [error]="fieldError(passwordModel, passwordErrors)"
           [(ngModel)]="password"
           #passwordModel="ngModel"
