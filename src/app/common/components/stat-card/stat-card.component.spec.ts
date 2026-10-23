@@ -22,6 +22,13 @@ describe('StatCardComponent', () => {
     expect(element.querySelector('.stat-card__label')?.textContent).toBe('Sports');
   });
 
+  it('can be the smaller card used beside a header', () => {
+    expect(element.classList).not.toContain('stat-card--compact');
+    fixture.componentRef.setInput('compact', true);
+    fixture.detectChanges();
+    expect(element.classList).toContain('stat-card--compact');
+  });
+
   it('shimmers while loading and shows a dash when the total is unavailable', () => {
     fixture.componentRef.setInput('loading', true);
     fixture.detectChanges();

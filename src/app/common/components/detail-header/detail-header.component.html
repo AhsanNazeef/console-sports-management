@@ -1,0 +1,29 @@
+<section class="detail-header" [class.detail-header--stacked]="layout() === 'stacked'" [attr.aria-busy]="loading()">
+  <div class="detail-header__top">
+    @if (loading()) {
+      <app-skeleton [width]="avatarSize() + 'px'" [height]="avatarSize() + 'px'" [circle]="true" />
+      <app-skeleton width="180px" height="20px" />
+    } @else {
+      <app-entity-avatar [name]="title()" [imageUrl]="imageUrl()" [seed]="seed()" [size]="avatarSize()" />
+      <h2 class="detail-header__title">{{ title() }}</h2>
+    }
+    <div class="detail-header__actions">
+      <ng-content select="[detail-header-actions]" />
+    </div>
+  </div>
+
+  <dl class="detail-header__fields">
+    @for (field of fields(); track field.label) {
+      <div class="detail-header__field">
+        <dt class="detail-header__label">{{ field.label }}</dt>
+        <dd class="detail-header__value">
+          @if (loading()) {
+            <app-skeleton width="96px" />
+          } @else {
+            {{ field.value === null || field.value === '' ? '—' : field.value }}
+          }
+        </dd>
+      </div>
+    }
+  </dl>
+</section>

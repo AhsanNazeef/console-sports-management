@@ -9,10 +9,15 @@ import { SkeletonComponent } from '../skeleton/skeleton.component';
   templateUrl: './stat-card.component.html',
   styleUrl: './stat-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '[class.stat-card--compact]': 'compact()',
+  },
 })
 export class StatCardComponent {
   // null while loading (shimmer) or when the total couldn't be fetched (dash).
   readonly value = input<number | null>(null);
   readonly label = input.required<string>();
   readonly loading = input(false);
+  // The smaller card beside a governing body's header (Figma "UEFA" screen).
+  readonly compact = input(false);
 }

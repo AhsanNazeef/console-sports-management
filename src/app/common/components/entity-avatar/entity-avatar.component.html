@@ -1,0 +1,14 @@
+@if (imageUrl() && !imageFailed()) {
+  <img
+    class="entity-avatar__image"
+    [src]="imageUrl()"
+    [width]="size()"
+    [height]="size()"
+    alt=""
+    (error)="imageFailed.set(true)"
+  />
+} @else {
+  <span class="entity-avatar__badge" [style.background-color]="accent()" [style.font-size.px]="size() / 2">
+    {{ initial() }}
+  </span>
+}

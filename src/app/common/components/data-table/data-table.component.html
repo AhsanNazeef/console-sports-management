@@ -1,0 +1,52 @@
+<div class="data-table" [class.data-table--loading]="loading()" [attr.aria-busy]="loading()">
+  <table class="data-table__table">
+    <caption class="data-table__caption" [textContent]="label()"></caption>
+    <thead>
+      <tr>
+        @for (column of columns(); track column.key) {
+          <th scope="col" class="data-table__head" [style.width]="column.width">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track row.id) {
+        <tr class="data-table__row">
+          @for (column of columns(); track column.key) {
+            <td class="data-table__cell" [class.data-table__cell--shaded]="column.shaded">
+              <ng-container
+                [ngTemplateOutlet]="cell()"
+                [ngTemplateOutletContext]="{ $implicit: row, key: column.key }"
+              />
+            </td>
+          }
+        </tr>
+      } @empty {
+        @if (loading()) {
+          @for (row of skeletonRows(); track $index) {
+            <tr class="data-table__row" aria-hidden="true">
+              @for (column of columns(); track column.key; let first = $first) {
+                <td class="data-table__cell" [class.data-table__cell--shaded]="column.shaded">
+                  @if (first) {
+                    <div class="data-table__skeleton-name">
+                      <app-skeleton width="20px" height="20px" [circle]="true" />
+                      <app-skeleton width="60%" />
+                    </div>
+                  } @else {
+                    <app-skeleton width="32px" />
+                  }
+                </td>
+              }
+            </tr>
+          }
+        } @else {
+          <tr>
+            <td class="data-table__empty" [attr.colspan]="columns().length">{{ emptyMessage() }}</td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+  @if (loading() && rows().length === 0) {
+    <output class="data-table__status">Loading {{ label().toLowerCase() }}…</output>
+  }
+</div>

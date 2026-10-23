@@ -2,7 +2,7 @@
   @if (value() !== null) {
     {{ value() | number }}
   } @else if (loading()) {
-    <app-skeleton width="48px" height="24px" />
+    <app-skeleton [width]="compact() ? '32px' : '48px'" [height]="compact() ? '14px' : '24px'" />
   } @else {
     —
   }

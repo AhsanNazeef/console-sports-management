@@ -1,0 +1,28 @@
+:host {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+// Many icons are dark glyphs on a transparent background, so they sit on a white circle.
+.entity-avatar__image {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 10%;
+  border-radius: 50%;
+  background-color: var(--color-white);
+  object-fit: contain;
+}
+
+.entity-avatar__badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  color: var(--color-base);
+  font-family: var(--font-body);
+  font-weight: 700;
+  line-height: 1;
+}

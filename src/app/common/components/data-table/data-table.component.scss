@@ -1,0 +1,71 @@
+@use '../../styles/a11y';
+
+:host {
+  display: block;
+}
+
+.data-table {
+  overflow-x: auto;
+  border: 1px solid var(--color-white-10);
+  border-radius: var(--radius-md);
+  transition: opacity 0.15s ease;
+
+  &--loading {
+    opacity: 0.6;
+  }
+
+  &__table {
+    width: 100%;
+    min-width: 480px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-family: var(--font-body);
+    font-size: 12px;
+  }
+
+  &__caption,
+  &__status {
+    @include a11y.visually-hidden;
+  }
+
+  &__head {
+    padding: 8px;
+    background-color: var(--color-white-10);
+    color: var(--color-white-54);
+    font-size: 10px;
+    font-weight: 400;
+    text-align: left;
+  }
+
+  &__row {
+    border-bottom: 1px solid var(--color-white-10);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  &__cell {
+    padding: 12px 8px;
+    overflow: hidden;
+    color: var(--color-white);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &--shaded {
+      background-color: var(--color-white-3);
+    }
+  }
+
+  &__skeleton-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__empty {
+    padding: 24px 8px;
+    color: var(--color-white-54);
+    text-align: center;
+  }
+}

@@ -30,3 +30,12 @@
     white-space: nowrap;
   }
 }
+
+// Figma draws borders inside the box; one pixel less padding keeps two cards as tall as the header beside them.
+:host(.stat-card--compact) {
+  padding-block: 15px;
+}
+
+:host(.stat-card--compact) .stat-card__value {
+  @include type.title-large;
+}
