@@ -1,3 +1,5 @@
+@use '../../../common/styles/a11y';
+
 :host {
   display: block;
 }
@@ -150,5 +152,10 @@
     padding: 24px 8px;
     color: var(--color-white-54);
     text-align: center;
+  }
+
+  // Announces the first load to screen readers; the skeleton rows themselves are hidden from them.
+  &__status {
+    @include a11y.visually-hidden;
   }
 }

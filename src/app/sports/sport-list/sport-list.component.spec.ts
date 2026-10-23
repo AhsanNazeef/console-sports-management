@@ -1,10 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import { ApiListResponse } from '../../common/models/api.model';
 import { SearchService } from '../../common/services/search.service';
 import { AuthService } from '../../core/auth/services/auth.service';
-import { Sport, SportQuery } from '../models/sport.model';
+import { CatalogueTotals, Sport, SportQuery } from '../models/sport.model';
 import { SportsApiService } from '../services/sports-api.service';
 import { SportListPage } from './sport-list.component';
 
@@ -38,7 +38,8 @@ describe('SportListPage', () => {
     deleteSport$: ReturnType<typeof vi.fn>;
   };
 
-  async function setUp(canEdit = true): Promise<void> {
+  // `adjustApi` can swap fake responses before the page is created (for example, requests that never answer).
+  async function setUp(canEdit = true, adjustApi?: () => void): Promise<void> {
     api = {
       getSports$: vi.fn(() => of(page([sport('a', 'Hockey'), sport('b', 'Boxing')], 12))),
       getCatalogueTotals$: vi.fn(() => of({ sports: 12, governingBodies: 27, organisations: 29, participants: 39 })),
@@ -46,6 +47,7 @@ describe('SportListPage', () => {
       updateSport$: vi.fn(() => of(sport('a', 'Ice Hockey'))),
       deleteSport$: vi.fn(() => of(undefined)),
     };
+    adjustApi?.();
     await TestBed.configureTestingModule({
       imports: [SportListPage],
       providers: [
@@ -70,11 +72,33 @@ describe('SportListPage', () => {
 
   it('shows the four totals from the backend and the first page of sports', async () => {
     await setUp();
-    const cards = Array.from(element.querySelectorAll('app-stat-card')).map((card) => card.textContent?.trim());
-    expect(cards).toEqual(['12Sports', '27Governing Bodies', '29Organisations', '39Participants']);
+    const cards = Array.from(element.querySelectorAll('app-stat-card')).map((card) =>
+      card.textContent?.replace(/\s+/g, ' ').trim()
+    );
+    expect(cards).toEqual(['12 Sports', '27 Governing Bodies', '29 Organisations', '39 Participants']);
     expect(element.querySelectorAll('tbody tr').length).toBe(2);
     expect(lastQuery()).toEqual({ search: '', page: 1, limit: 10, sortBy: 'createdAt', sortOrder: 'desc' });
     expect(element.textContent).toContain('1–10 of 12');
+  });
+
+  it('shows skeletons for the totals and the table until the first data arrives', async () => {
+    const totals$ = new Subject<CatalogueTotals>();
+    const sports$ = new Subject<ApiListResponse<Sport>>();
+    await setUp(true, () => {
+      api.getCatalogueTotals$.mockReturnValue(totals$);
+      api.getSports$.mockReturnValue(sports$);
+    });
+    await settle();
+
+    expect(element.querySelectorAll('app-stat-card app-skeleton').length).toBe(4);
+    expect(element.querySelectorAll('tbody tr[aria-hidden="true"]').length).toBe(10);
+    expect(element.querySelector('app-pagination')).toBeNull();
+
+    totals$.next({ sports: 12, governingBodies: 27, organisations: 29, participants: 39 });
+    sports$.next(page([sport('a', 'Hockey')], 12));
+    await settle();
+    expect(element.querySelectorAll('app-skeleton').length).toBe(0);
+    expect(element.querySelectorAll('.sports-table__row').length).toBe(1);
   });
 
   it('searches on the server from the header search, back on page 1', async () => {

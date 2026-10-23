@@ -70,6 +70,7 @@ export class SportListPage {
   readonly isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
   readonly totals = signal<CatalogueTotals | null>(null);
+  readonly totalsLoading = signal(true);
 
   readonly formOpen = signal(false);
   readonly editing = signal<Sport | null>(null);
@@ -77,8 +78,8 @@ export class SportListPage {
   readonly isSaving = signal(false);
   readonly actionError = signal<string | null>(null);
 
+  // Shown when there are no rows and nothing is loading (the table shows skeleton rows while it loads).
   readonly emptyMessage = computed(() => {
-    if (this.isLoading()) return 'Loading sports…';
     if (this.loadError()) return 'Sports could not be loaded.';
     const search = this.query().search;
     return search ? `No sports match “${search}”.` : 'No sports yet.';
@@ -112,10 +113,17 @@ export class SportListPage {
 
     this.reloadTotals$
       .pipe(
+        tap(() => this.totalsLoading.set(true)),
         switchMap(() => this.sportsApi.getCatalogueTotals$().pipe(catchError(() => of(null)))),
         takeUntilDestroyed()
       )
-      .subscribe((totals) => this.totals.set(totals));
+      .subscribe((totals) => {
+        this.totalsLoading.set(false);
+        // If a refresh fails, keep the last totals rather than blanking the cards.
+        if (totals || !this.totals()) {
+          this.totals.set(totals);
+        }
+      });
   }
 
   goToPage(page: number): void {

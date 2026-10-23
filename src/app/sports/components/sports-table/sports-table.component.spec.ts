@@ -74,6 +74,24 @@ describe('SportsTableComponent', () => {
     expect(element.querySelector('th')?.getAttribute('aria-sort')).toBe('ascending');
   });
 
+  it('shows placeholder rows on the first load instead of an empty table', () => {
+    fixture.componentRef.setInput('sports', []);
+    fixture.componentRef.setInput('loading', true);
+    fixture.componentRef.setInput('skeletonRowCount', 10);
+    fixture.detectChanges();
+    expect(element.querySelectorAll('tbody tr[aria-hidden="true"]').length).toBe(10);
+    expect(element.querySelector('.sports-table__empty')).toBeNull();
+    expect(element.querySelector('output')?.textContent).toContain('Loading sports…');
+  });
+
+  it('keeps the current rows (dimmed) while a later page loads', () => {
+    fixture.componentRef.setInput('loading', true);
+    fixture.detectChanges();
+    expect(element.querySelectorAll('tbody tr[aria-hidden="true"]').length).toBe(0);
+    expect(element.querySelectorAll('.sports-table__row').length).toBe(2);
+    expect(element.querySelector('.sports-table--loading')).toBeTruthy();
+  });
+
   it('shows a message when there is nothing to list', () => {
     fixture.componentRef.setInput('sports', []);
     fixture.componentRef.setInput('emptyMessage', 'No sports match "zzz".');

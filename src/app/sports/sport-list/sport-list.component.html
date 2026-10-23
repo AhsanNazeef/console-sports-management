@@ -7,10 +7,10 @@
   </div>
 
   <section class="sport-list__stats" aria-label="Catalogue totals">
-    <app-stat-card label="Sports" [value]="totals()?.sports ?? null" />
-    <app-stat-card label="Governing Bodies" [value]="totals()?.governingBodies ?? null" />
-    <app-stat-card label="Organisations" [value]="totals()?.organisations ?? null" />
-    <app-stat-card label="Participants" [value]="totals()?.participants ?? null" />
+    <app-stat-card label="Sports" [value]="totals()?.sports ?? null" [loading]="totalsLoading()" />
+    <app-stat-card label="Governing Bodies" [value]="totals()?.governingBodies ?? null" [loading]="totalsLoading()" />
+    <app-stat-card label="Organisations" [value]="totals()?.organisations ?? null" [loading]="totalsLoading()" />
+    <app-stat-card label="Participants" [value]="totals()?.participants ?? null" [loading]="totalsLoading()" />
   </section>
 
   @if (loadError(); as message) {
@@ -26,6 +26,7 @@
     [sortBy]="query().sortBy"
     [sortOrder]="query().sortOrder"
     [loading]="isLoading()"
+    [skeletonRowCount]="pageSize"
     [emptyMessage]="emptyMessage()"
     (sortByName)="cycleNameSort()"
     (edit)="openEdit($event)"

@@ -74,10 +74,38 @@
           }
         </tr>
       } @empty {
-        <tr>
-          <td class="sports-table__empty" [attr.colspan]="canEdit() ? 5 : 4">{{ emptyMessage() }}</td>
-        </tr>
+        @if (loading()) {
+          <!-- First load: placeholder rows as tall as real ones, so the table keeps its height. -->
+          @for (row of skeletonRows(); track $index) {
+            <tr class="sports-table__row" aria-hidden="true">
+              <td class="sports-table__cell">
+                <div class="sports-table__sport">
+                  <app-skeleton width="20px" height="20px" [circle]="true" />
+                  <app-skeleton width="60%" />
+                </div>
+              </td>
+              <td class="sports-table__cell sports-table__cell--shaded"><app-skeleton width="16px" /></td>
+              <td class="sports-table__cell"><app-skeleton width="16px" /></td>
+              <td class="sports-table__cell sports-table__cell--shaded"><app-skeleton width="16px" /></td>
+              @if (canEdit()) {
+                <td class="sports-table__cell">
+                  <div class="sports-table__actions">
+                    <app-skeleton width="16px" height="16px" />
+                    <app-skeleton width="16px" height="16px" />
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        } @else {
+          <tr>
+            <td class="sports-table__empty" [attr.colspan]="canEdit() ? 5 : 4">{{ emptyMessage() }}</td>
+          </tr>
+        }
       }
     </tbody>
   </table>
+  @if (loading() && sports().length === 0) {
+    <output class="sports-table__status">Loading sports…</output>
+  }
 </div>
