@@ -1,0 +1,31 @@
+@if (open()) {
+  <button
+    type="button"
+    class="dialog-backdrop"
+    tabindex="-1"
+    aria-label="Close dialog"
+    (click)="closed.emit()"
+  ></button>
+  <section class="dialog" role="dialog" aria-modal="true" [attr.aria-labelledby]="titleId">
+    @if (icon(); as iconName) {
+      <div class="dialog__icon">
+        <img [src]="'assets/icons/' + iconName + '.svg'" width="36" height="35" alt="" aria-hidden="true" />
+      </div>
+    }
+    <div class="dialog__text">
+      <h2 class="dialog__title" [id]="titleId">{{ title() }}</h2>
+      @if (description(); as text) {
+        <p class="dialog__description">{{ text }}</p>
+      }
+    </div>
+    <ng-content />
+    <div class="dialog__actions">
+      <app-button [fullWidth]="true" [disabled]="primaryDisabled()" (clicked)="primary.emit()">
+        {{ primaryLabel() }}
+      </app-button>
+      @if (secondaryLabel(); as label) {
+        <app-button variant="outline" [fullWidth]="true" (clicked)="secondary.emit()">{{ label }}</app-button>
+      }
+    </div>
+  </section>
+}
