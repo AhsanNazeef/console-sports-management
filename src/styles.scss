@@ -1,1 +1,41 @@
-/* You can add global styles to this file, and also import other style files */
+// Global design tokens from the Buzzer design system (Figma: Design System page).
+:root {
+  --color-base: #131515;
+  --color-base-light: #212121;
+  --color-overlay: #3e3e3e;
+  --color-dark: #00181e;
+  --color-yellow: #ffb414;
+  --color-red: #ec193c;
+  --color-green: #2ed368;
+  --color-orange: #ff5b14;
+  --color-white: #ffffff;
+
+  --color-white-3: rgba(255, 255, 255, 0.03);
+  --color-white-10: rgba(255, 255, 255, 0.1);
+  --color-white-24: rgba(255, 255, 255, 0.24);
+  --color-white-54: rgba(255, 255, 255, 0.54);
+  --color-red-20: rgba(236, 25, 60, 0.2);
+  --color-backdrop: rgba(19, 21, 21, 0.75);
+
+  --font-heading: 'Poppins', sans-serif;
+  --font-ui: 'Open Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  --radius-sm: 7px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-pill: 32px;
+}
+
+html {
+  background-color: var(--color-base);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color-scheme: dark;
+  background-color: var(--color-base);
+  color: var(--color-white);
+  font-family: var(--font-ui);
+}

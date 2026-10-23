@@ -1,0 +1,49 @@
+// Text styles from the Buzzer design system, as used by its components.
+
+@mixin headline-medium {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+@mixin body-large {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+@mixin label-large {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+@mixin label-large-bold {
+  @include label-large;
+  font-weight: 700;
+}
+
+@mixin label-small {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+@mixin button-label-large {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  letter-spacing: -0.408px;
+  font-feature-settings: 'case' 1;
+}
+
+@mixin button-label-small {
+  @include button-label-large;
+  font-size: 10px;
+  line-height: 14px;
+}
