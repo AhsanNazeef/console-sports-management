@@ -1,6 +1,10 @@
+import { ChildListQuery } from '../models/hierarchy.model';
 import { SportQuery } from '../models/sport.model';
 
 export const SPORTS_PAGE_SIZE = 10;
+
+// Governing bodies, organisations and participants on the drill-down pages.
+export const DEFAULT_CHILD_QUERY: ChildListQuery = { search: '', page: 1, limit: SPORTS_PAGE_SIZE };
 
 export const DEFAULT_SPORT_QUERY: SportQuery = {
   search: '',

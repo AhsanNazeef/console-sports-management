@@ -22,6 +22,11 @@ export class SportsApiService {
     return this.http.get<ApiListResponse<Sport>>(`${this.baseUrl}/sports`, { params });
   }
 
+  // The detail endpoint has no counts; the detail page loads them separately.
+  getSport$(id: string): Observable<Sport> {
+    return this.http.get<ApiResponse<Sport>>(`${this.baseUrl}/sports/${id}`).pipe(map((response) => response.data));
+  }
+
   createSport$(input: SportInput): Observable<Sport> {
     return this.http.post<ApiResponse<Sport>>(`${this.baseUrl}/sports`, input).pipe(map((response) => response.data));
   }
