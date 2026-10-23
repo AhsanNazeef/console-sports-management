@@ -1,2 +1,10 @@
-<p class="stat-card__value">{{ value() === null ? '—' : (value() | number) }}</p>
+<p class="stat-card__value">
+  @if (value() !== null) {
+    {{ value() | number }}
+  } @else if (loading()) {
+    <app-skeleton width="48px" height="24px" />
+  } @else {
+    —
+  }
+</p>
 <p class="stat-card__label">{{ label() }}</p>

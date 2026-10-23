@@ -1,0 +1,14 @@
+@use '../../styles/shared';
+
+:host {
+  @extend %sk-shimmer;
+  display: inline-block;
+  flex-shrink: 0;
+  max-width: 100%;
+  vertical-align: middle;
+  border-radius: 4px;
+}
+
+:host(.skeleton--circle) {
+  border-radius: 50%;
+}
