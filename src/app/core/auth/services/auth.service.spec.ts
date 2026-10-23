@@ -100,6 +100,14 @@ describe('AuthService', () => {
     expect(navigateByUrl).toHaveBeenCalled();
   });
 
+  it('checks the signed-in user against a list of roles', () => {
+    const auth = createService();
+    expect(auth.hasAnyRole(['ADMIN'])).toBe(false);
+    auth.currentUser.set({ ...USER, role: 'OPERATOR' });
+    expect(auth.hasAnyRole(['ADMIN', 'OPERATOR'])).toBe(true);
+    expect(auth.hasAnyRole(['ADMIN'])).toBe(false);
+  });
+
   it('builds the login address with a return path, except for the home page', () => {
     const auth = createService();
     expect(auth.loginUrlTree('/sports').toString()).toBe('/login?returnUrl=%2Fsports');

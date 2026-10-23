@@ -81,6 +81,12 @@ export class AuthService {
     void this.router.navigateByUrl(this.loginUrlTree(returnUrl));
   }
 
+  // True when the signed-in user has one of these roles. Reads a signal, so it works inside computed().
+  hasAnyRole(roles: readonly string[]): boolean {
+    const role = this.currentUser()?.role;
+    return !!role && roles.includes(role);
+  }
+
   getAccessToken(): string | null {
     return this.cache.get<string>(ACCESS_TOKEN_KEY, 'session');
   }
