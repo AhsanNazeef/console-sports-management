@@ -1,0 +1,15 @@
+<button
+  class="button"
+  [class.button--outline]="variant() === 'outline'"
+  [class.button--small]="size() === 'small'"
+  [type]="type()"
+  [disabled]="disabled()"
+  (click)="onClick()"
+>
+  @if (icon(); as iconName) {
+    <span class="button__icon">
+      <img [src]="'assets/icons/' + iconName + '.svg'" width="18" height="18" alt="" aria-hidden="true" />
+    </span>
+  }
+  <span class="button__label"><ng-content /></span>
+</button>
