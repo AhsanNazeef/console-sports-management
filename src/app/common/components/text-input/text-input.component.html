@@ -1,0 +1,49 @@
+<div
+  class="text-input"
+  [class.text-input--error]="error()"
+  [class.text-input--disabled]="isDisabled()"
+  [class.text-input--with-message]="error() || message()"
+>
+  <div class="text-input__content">
+    <input
+      class="text-input__field"
+      [id]="inputId()"
+      [type]="type()"
+      [placeholder]="placeholder()"
+      [value]="value()"
+      [disabled]="isDisabled()"
+      [attr.autocomplete]="autocomplete()"
+      [attr.aria-invalid]="error() ? true : null"
+      [attr.aria-describedby]="error() || message() ? inputId() + '-message' : null"
+      (input)="onInput($event)"
+      (blur)="onBlur()"
+    />
+    @if (status() === 'valid') {
+      <span class="text-input__status text-input__status--valid">
+        <img src="assets/icons/ic_check.svg" width="6" height="10" alt="" aria-hidden="true" />
+      </span>
+    } @else if (status() === 'invalid') {
+      <img
+        class="text-input__status"
+        src="assets/icons/ic_clear_red.svg"
+        width="17"
+        height="17"
+        alt=""
+        aria-hidden="true"
+      />
+    } @else if (clearable() && value() && !isDisabled()) {
+      <button type="button" class="text-input__clear" aria-label="Clear" (click)="clear()">
+        <img
+          [src]="error() ? 'assets/icons/ic_clear_error.svg' : 'assets/icons/ic_clear.svg'"
+          width="17"
+          height="17"
+          alt=""
+          aria-hidden="true"
+        />
+      </button>
+    }
+  </div>
+  @if (error() || message(); as text) {
+    <p class="text-input__message" [id]="inputId() + '-message'">{{ text }}</p>
+  }
+</div>
