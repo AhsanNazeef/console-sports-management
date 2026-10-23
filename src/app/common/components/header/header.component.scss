@@ -1,3 +1,4 @@
+@use '../../styles/breakpoints' as bp;
 @use '../../styles/typography' as type;
 
 :host {
@@ -13,6 +14,28 @@
   padding: 8px 24px;
   border-bottom: 1px solid var(--color-white-10);
   background-color: var(--color-base);
+
+  &__menu,
+  &__search-cancel {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-white);
+      outline-offset: 2px;
+    }
+  }
+
+  &__menu {
+    display: flex;
+    flex-shrink: 0;
+
+    img {
+      transform: rotate(180deg);
+    }
+  }
 
   &__title {
     @include type.headline-small;
@@ -74,15 +97,18 @@
 
   &__search-cancel {
     @include type.button-label-large;
-    padding: 0;
-    border: 0;
-    background: none;
     color: var(--color-yellow);
-    cursor: pointer;
+  }
 
-    &:focus-visible {
-      outline: 2px solid var(--color-white);
-      outline-offset: 2px;
+  // Phones: the search moves to its own full-width row under the title.
+  @include bp.phone {
+    flex-wrap: wrap;
+    row-gap: 12px;
+    height: auto;
+    padding: 12px 16px;
+
+    &__search {
+      flex-basis: 100%;
     }
   }
 }

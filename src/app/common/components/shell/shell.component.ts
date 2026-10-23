@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { distinctUntilChanged, filter, map } from 'rxjs';
 import { PageTitleService } from '../../../core/page-title.service';
 import { NAV_GROUPS } from '../../constants/navigation.constants';
 import { SearchService } from '../../services/search.service';
+import { ViewportService } from '../../services/viewport.service';
 import { SidebarComponent } from '../../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
 
@@ -16,16 +17,26 @@ import { HeaderComponent } from '../header/header.component';
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:keydown.escape)': 'closeDrawer()',
+  },
 })
 export class ShellComponent {
   private readonly router = inject(Router);
   private readonly pageTitleService = inject(PageTitleService);
   private readonly searchService = inject(SearchService);
+  private readonly viewport = inject(ViewportService);
 
   readonly navGroups = NAV_GROUPS;
-  readonly sidebarCollapsed = signal(false);
   readonly pageTitle = toSignal(this.pageTitleService.pageTitle$, { initialValue: '' });
   readonly searchQuery = toSignal(this.searchService.query$, { initialValue: '' });
+
+  // Phones get the sidebar as a slide-in drawer; tablets start with the icon rail.
+  readonly isPhone = toSignal(this.viewport.isPhone$, { requireSync: true });
+  private readonly isTablet = toSignal(this.viewport.isTablet$, { requireSync: true });
+  readonly sidebarCollapsed = linkedSignal(() => this.isTablet());
+  readonly drawerOpen = signal(false);
+  readonly showDrawer = computed(() => this.isPhone() && this.drawerOpen());
 
   constructor() {
     // Each page starts with an empty search.
@@ -37,6 +48,18 @@ export class ShellComponent {
         takeUntilDestroyed()
       )
       .subscribe(() => this.searchService.setQuery(''));
+  }
+
+  onSidebarCollapsedChange(collapsed: boolean): void {
+    if (this.isPhone()) {
+      this.closeDrawer();
+    } else {
+      this.sidebarCollapsed.set(collapsed);
+    }
+  }
+
+  closeDrawer(): void {
+    this.drawerOpen.set(false);
   }
 
   onSearchQueryChange(query: string): void {

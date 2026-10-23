@@ -47,6 +47,7 @@
                 ariaCurrentWhenActive="page"
                 [routerLink]="item.path"
                 [attr.title]="collapsed() ? item.label : null"
+                (click)="itemSelected.emit()"
               >
                 <img [src]="'assets/icons/' + item.icon + '.svg'" width="24" height="24" alt="" aria-hidden="true" />
                 <span class="sidebar__item-label">{{ item.label }}</span>

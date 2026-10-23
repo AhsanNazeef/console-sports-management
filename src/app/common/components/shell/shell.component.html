@@ -1,14 +1,26 @@
-<div class="shell">
+<div class="shell" [class.shell--phone]="isPhone()" [class.shell--drawer-open]="showDrawer()">
   <app-sidebar
     class="shell__sidebar"
     [groups]="navGroups"
-    [collapsed]="sidebarCollapsed()"
-    (collapsedChange)="sidebarCollapsed.set($event)"
+    [collapsed]="!isPhone() && sidebarCollapsed()"
+    (collapsedChange)="onSidebarCollapsedChange($event)"
+    (itemSelected)="closeDrawer()"
   />
+  @if (showDrawer()) {
+    <button
+      type="button"
+      class="shell__backdrop"
+      tabindex="-1"
+      aria-label="Close menu"
+      (click)="closeDrawer()"
+    ></button>
+  }
   <div class="shell__main">
     <app-header
       [heading]="pageTitle()"
       [searchQuery]="searchQuery()"
+      [showMenuButton]="isPhone()"
+      (menuClicked)="drawerOpen.set(true)"
       (searchQueryChange)="onSearchQueryChange($event)"
     />
     <main class="shell__content">

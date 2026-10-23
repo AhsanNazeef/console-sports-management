@@ -1,4 +1,9 @@
 <header class="header">
+  @if (showMenuButton()) {
+    <button type="button" class="header__menu" aria-label="Open menu" (click)="menuClicked.emit()">
+      <img src="assets/icons/ic_collapse.svg" width="24" height="24" alt="" aria-hidden="true" />
+    </button>
+  }
   <h1 class="header__title">{{ heading() }}</h1>
   @if (showSearch()) {
     <div class="header__search" role="search">

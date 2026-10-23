@@ -1,7 +1,11 @@
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { NavGroup } from '../models/navigation.model';
 import { SidebarComponent } from './sidebar.component';
+
+@Component({ template: '' })
+class BlankPage {}
 
 const GROUPS: NavGroup[] = [
   { id: 'match', label: 'Match Management', items: [{ label: 'Sports', path: '/sports', icon: 'ic_sport' }] },
@@ -14,7 +18,7 @@ describe('SidebarComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SidebarComponent],
-      providers: [provideRouter([])],
+      providers: [provideRouter([{ path: '**', component: BlankPage }])],
     }).compileComponents();
     fixture = TestBed.createComponent(SidebarComponent);
     fixture.componentRef.setInput('groups', GROUPS);
@@ -42,6 +46,14 @@ describe('SidebarComponent', () => {
     toggle.click();
     fixture.detectChanges();
     expect(queryAll('.sidebar__items')[0].hidden).toBe(false);
+  });
+
+  it('tells the parent when an item is chosen', async () => {
+    let selected = 0;
+    fixture.componentInstance.itemSelected.subscribe(() => selected++);
+    queryAll('.sidebar__item')[1].click();
+    await fixture.whenStable();
+    expect(selected).toBe(1);
   });
 
   it('asks to collapse, and shows only icons when collapsed', () => {

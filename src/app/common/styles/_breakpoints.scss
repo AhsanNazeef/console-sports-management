@@ -1,0 +1,9 @@
+// Viewport widths where the shell changes layout. Keep in step with LAYOUT_BREAKPOINTS in layout.constants.ts.
+$tablet: 768px;
+$desktop: 1024px;
+
+@mixin phone {
+  @media (max-width: ($tablet - 0.02px)) {
+    @content;
+  }
+}

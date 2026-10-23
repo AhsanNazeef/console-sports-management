@@ -15,6 +15,7 @@ export class SidebarComponent {
   readonly collapsed = input(false);
 
   readonly collapsedChange = output<boolean>();
+  readonly itemSelected = output<void>();
 
   readonly closedGroupIds = signal<ReadonlySet<string>>(new Set());
 

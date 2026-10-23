@@ -36,6 +36,16 @@ describe('HeaderComponent', () => {
     expect(emitted).toEqual(['']);
   });
 
+  it('shows a menu button only when asked, and emits when it is clicked', () => {
+    expect(query('.header__menu')).toBeNull();
+    let clicks = 0;
+    fixture.componentInstance.menuClicked.subscribe(() => clicks++);
+    fixture.componentRef.setInput('showMenuButton', true);
+    fixture.detectChanges();
+    (query('.header__menu') as HTMLButtonElement).click();
+    expect(clicks).toBe(1);
+  });
+
   it('can hide the search', () => {
     fixture.componentRef.setInput('showSearch', false);
     fixture.detectChanges();
