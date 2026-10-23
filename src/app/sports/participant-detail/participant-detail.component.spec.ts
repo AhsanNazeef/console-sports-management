@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { provideRouter, RouterLink } from '@angular/router';
 import { of } from 'rxjs';
 import { sampleOrganisation, sampleParticipant, sampleSport } from '../../../testing/hierarchy-fixtures';
 import { HierarchyApiService } from '../services/hierarchy-api.service';
@@ -43,6 +44,13 @@ describe('ParticipantDetailPage', () => {
       field.textContent?.replace(/\s+/g, ' ').trim()
     );
     expect(facts.slice(0, 3)).toEqual(['Team: First XI', 'Position: Forward', 'Jersey number: 9']);
+  });
+
+  it('moves between levels without changing the address bar', async () => {
+    await setUp();
+    const links = fixture.debugElement.queryAll(By.css('a'));
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.every((link) => link.injector.get(RouterLink).skipLocationChange)).toBe(true);
   });
 
   it('links back up through every level in the breadcrumbs', async () => {

@@ -17,4 +17,6 @@ export interface Breadcrumb {
 export class BreadcrumbsComponent {
   // The last item is the current page.
   readonly items = input.required<readonly Breadcrumb[]>();
+  // Follow the links without changing the address bar (the sports drill-down keeps showing /sports).
+  readonly skipLocationChange = input(false);
 }

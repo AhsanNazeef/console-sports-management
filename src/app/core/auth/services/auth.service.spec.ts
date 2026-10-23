@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -98,6 +99,14 @@ describe('AuthService', () => {
     expect(sessionStorage.getItem(ACCESS_TOKEN_KEY)).toBeNull();
     expect(auth.consumeMessage()).toBe(SESSION_EXPIRED_MESSAGE);
     expect(navigateByUrl).toHaveBeenCalled();
+  });
+
+  it('returns to the address shown in the bar, not a drill-down route reached without changing it', () => {
+    sessionStorage.setItem(ACCESS_TOKEN_KEY, JSON.stringify({ value: fakeJwt(900) }));
+    const auth = createService();
+    vi.spyOn(TestBed.inject(Location), 'path').mockReturnValue('/sports');
+    auth.expireSession();
+    expect(String(navigateByUrl.mock.calls[0][0])).toBe('/login?returnUrl=%2Fsports');
   });
 
   it('checks the signed-in user against a list of roles', () => {

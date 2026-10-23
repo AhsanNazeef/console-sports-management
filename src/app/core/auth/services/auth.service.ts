@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -21,6 +22,7 @@ import { getTokenExpiry } from '../../../common/utils/jwt.util';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
   private readonly cache = inject(CacheService);
   private readonly authUrl = `${environment.apiBaseUrl}/auth`;
   private readonly expiryChanges = new Subject<number | null>();
@@ -76,7 +78,8 @@ export class AuthService {
     if (!this.getAccessToken()) {
       return;
     }
-    const returnUrl = this.router.url;
+    // The address bar, not router.url: drill-down pages are reached without changing the address.
+    const returnUrl = this.location.path();
     this.endSession(SESSION_EXPIRED_MESSAGE);
     void this.router.navigateByUrl(this.loginUrlTree(returnUrl));
   }

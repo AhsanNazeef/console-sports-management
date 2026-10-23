@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { provideRouter, RouterLink } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { listOf, sampleGoverningBody, sampleSport } from '../../../testing/hierarchy-fixtures';
 import { AuthService } from '../../core/auth/services/auth.service';
@@ -57,6 +58,13 @@ describe('SportDetailPage', () => {
     expect(text('tbody tr td')).toEqual(['U UEFA', '3', '40']);
     expect(element.querySelector('tbody a')?.getAttribute('href')).toBe('/sports/s1/governing-bodies/g1');
     expect(hierarchyApi.getGoverningBodies$).toHaveBeenCalledWith('s1', { search: '', page: 1, limit: 10 });
+  });
+
+  it('moves between levels without changing the address bar', async () => {
+    await setUp();
+    const links = fixture.debugElement.queryAll(By.css('a'));
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.every((link) => link.injector.get(RouterLink).skipLocationChange)).toBe(true);
   });
 
   it('links back up to the catalogue from the breadcrumbs', async () => {

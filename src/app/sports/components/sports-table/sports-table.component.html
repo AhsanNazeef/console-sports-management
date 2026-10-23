@@ -31,9 +31,13 @@
           <td class="sports-table__cell">
             <div class="sports-table__sport">
               <app-entity-avatar [name]="sport.name" [imageUrl]="sport.iconUrl" [seed]="sport.id" />
-              <a class="sports-table__name" [routerLink]="['/sports', sport.id]" [title]="sport.name">{{
-                sport.name
-              }}</a>
+              <a
+                class="sports-table__name"
+                [routerLink]="['/sports', sport.id]"
+                [title]="sport.name"
+                skipLocationChange
+                >{{ sport.name }}</a
+              >
             </div>
           </td>
           <td class="sports-table__cell sports-table__cell--shaded">{{ sport.governingBodyCount }}</td>

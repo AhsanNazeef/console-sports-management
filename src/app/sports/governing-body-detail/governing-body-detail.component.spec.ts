@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { provideRouter, RouterLink } from '@angular/router';
 import { of } from 'rxjs';
 import { listOf, sampleGoverningBody, sampleOrganisation } from '../../../testing/hierarchy-fixtures';
 import { AuthService } from '../../core/auth/services/auth.service';
@@ -55,6 +56,13 @@ describe('GoverningBodyDetailPage', () => {
     expect(element.querySelector('tbody a')?.getAttribute('href')).toBe(
       '/sports/s1/governing-bodies/g1/organisations/o1'
     );
+  });
+
+  it('moves between levels without changing the address bar', async () => {
+    await setUp();
+    const links = fixture.debugElement.queryAll(By.css('a'));
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.every((link) => link.injector.get(RouterLink).skipLocationChange)).toBe(true);
   });
 
   it('links back up through the sport in the breadcrumbs', async () => {

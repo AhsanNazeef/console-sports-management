@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 
-// The drill-down: each level's address sits under its parent's. Route ids reach the pages as inputs.
+// The drill-down: each level's route sits under its parent's, and the route ids reach the pages as inputs.
+// Links into it use skipLocationChange, so the address bar keeps showing /sports and a refresh returns to the
+// catalogue.
 export const sportsRoutes: Routes = [
   {
     path: '',

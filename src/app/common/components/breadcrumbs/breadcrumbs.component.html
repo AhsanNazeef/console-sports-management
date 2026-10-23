@@ -3,7 +3,9 @@
     @for (item of items(); track $index; let last = $last) {
       <li>
         @if (item.link && !last) {
-          <a class="breadcrumbs__item" [routerLink]="item.link">{{ item.label }}</a>
+          <a class="breadcrumbs__item" [routerLink]="item.link" [skipLocationChange]="skipLocationChange()">{{
+            item.label
+          }}</a>
         } @else {
           <span
             class="breadcrumbs__item"

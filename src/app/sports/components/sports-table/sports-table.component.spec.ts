@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { provideRouter, RouterLink } from '@angular/router';
 import { Sport } from '../../models/sport.model';
 import { SportsTableComponent } from './sports-table.component';
 
@@ -49,6 +50,12 @@ describe('SportsTableComponent', () => {
   it('links each sport to its detail page', () => {
     const links = Array.from(element.querySelectorAll('a.sports-table__name')).map((link) => link.getAttribute('href'));
     expect(links).toEqual(['/sports/a', '/sports/b']);
+  });
+
+  it('opens a sport without changing the address bar', () => {
+    const links = fixture.debugElement.queryAll(By.css('a.sports-table__name'));
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.every((link) => link.injector.get(RouterLink).skipLocationChange)).toBe(true);
   });
 
   it('offers edit and delete only to editors', () => {

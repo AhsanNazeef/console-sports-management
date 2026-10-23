@@ -1,10 +1,10 @@
 <div class="detail-page">
-  <app-breadcrumbs [items]="breadcrumbs()" />
+  <app-breadcrumbs [items]="breadcrumbs()" [skipLocationChange]="true" />
 
   @if (notFound()) {
     <div class="detail-page__missing" role="alert">
       <span>This participant doesn't exist here or has been deleted.</span>
-      <a [routerLink]="organisationLink()">Back to the organisation</a>
+      <a [routerLink]="organisationLink()" skipLocationChange>Back to the organisation</a>
     </div>
   } @else {
     <app-detail-header
