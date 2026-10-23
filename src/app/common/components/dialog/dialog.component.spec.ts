@@ -7,7 +7,7 @@ describe('DialogComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({ imports: [DialogComponent] }).compileComponents();
     fixture = TestBed.createComponent(DialogComponent);
-    fixture.componentRef.setInput('title', 'Delete sport?');
+    fixture.componentRef.setInput('heading', 'Delete sport?');
     fixture.detectChanges();
   });
 

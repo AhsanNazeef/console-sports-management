@@ -13,7 +13,7 @@
       </div>
     }
     <div class="dialog__text">
-      <h2 class="dialog__title" [id]="titleId">{{ title() }}</h2>
+      <h2 class="dialog__title" [id]="titleId">{{ heading() }}</h2>
       @if (description(); as text) {
         <p class="dialog__description">{{ text }}</p>
       }

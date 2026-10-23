@@ -16,7 +16,7 @@ let nextId = 0;
 })
 export class DialogComponent {
   readonly open = input(false);
-  readonly title = input.required<string>();
+  readonly heading = input.required<string>();
   readonly description = input<string | null>(null);
   readonly icon = input<string | null>('ic_verified_badge');
   readonly primaryLabel = input('OK');
