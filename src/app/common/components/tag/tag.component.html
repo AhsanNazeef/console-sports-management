@@ -1,0 +1,12 @@
+<button
+  type="button"
+  class="tag"
+  [class.tag--selected]="selected()"
+  [attr.aria-pressed]="selected()"
+  (click)="toggle()"
+>
+  @if (icon(); as symbol) {
+    <span class="tag__icon" aria-hidden="true">{{ symbol }}</span>
+  }
+  <span class="tag__label"><ng-content /></span>
+</button>
