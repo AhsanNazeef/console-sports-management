@@ -55,4 +55,16 @@
       </section>
     }
   </nav>
+
+  @if (userEmail(); as email) {
+    <div class="sidebar__user">
+      <span class="sidebar__avatar" aria-hidden="true" [attr.title]="collapsed() ? email : null">
+        {{ email.charAt(0).toUpperCase() }}
+      </span>
+      <div class="sidebar__user-details" [attr.inert]="collapsed() ? '' : null">
+        <span class="sidebar__user-email">{{ email }}</span>
+        <button type="button" class="sidebar__sign-out" (click)="signOut.emit()">Sign out</button>
+      </div>
+    </div>
+  }
 </aside>

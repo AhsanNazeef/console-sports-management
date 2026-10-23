@@ -56,6 +56,18 @@ describe('SidebarComponent', () => {
     expect(selected).toBe(1);
   });
 
+  it('shows the signed-in user and asks to sign out', () => {
+    expect(queryAll('.sidebar__user').length).toBe(0);
+    let signOuts = 0;
+    fixture.componentInstance.signOut.subscribe(() => signOuts++);
+    fixture.componentRef.setInput('userEmail', 'admin@buzzer.dev');
+    fixture.detectChanges();
+    expect(queryAll('.sidebar__avatar')[0].textContent?.trim()).toBe('A');
+    expect(queryAll('.sidebar__user-email')[0].textContent).toBe('admin@buzzer.dev');
+    queryAll('.sidebar__sign-out')[0].click();
+    expect(signOuts).toBe(1);
+  });
+
   it('asks to collapse, and shows only icons when collapsed', () => {
     let collapsed: boolean | undefined;
     fixture.componentInstance.collapsedChange.subscribe((value) => (collapsed = value));

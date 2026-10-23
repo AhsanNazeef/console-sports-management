@@ -3,8 +3,10 @@
     class="shell__sidebar"
     [groups]="navGroups"
     [collapsed]="!isPhone() && sidebarCollapsed()"
+    [userEmail]="userEmail()"
     (collapsedChange)="onSidebarCollapsedChange($event)"
     (itemSelected)="closeDrawer()"
+    (signOut)="onSignOut()"
   />
   @if (showDrawer()) {
     <button

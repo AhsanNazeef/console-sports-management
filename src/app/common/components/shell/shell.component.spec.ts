@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, TitleStrategy } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { firstValueFrom, of } from 'rxjs';
+import { AuthService } from '../../../core/auth/services/auth.service';
 import { PageTitleService } from '../../../core/page-title.service';
 import { SearchService } from '../../services/search.service';
 import { ViewportService } from '../../services/viewport.service';
@@ -15,6 +16,10 @@ type Layout = 'desktop' | 'tablet' | 'phone';
 
 describe('ShellComponent', () => {
   let harness: RouterTestingHarness;
+  const authService = {
+    currentUser: signal({ id: 'u1', email: 'admin@buzzer.dev', role: 'ADMIN' }),
+    signOut: vi.fn(),
+  };
 
   async function setUp(layout: Layout = 'desktop'): Promise<void> {
     TestBed.configureTestingModule({
@@ -30,6 +35,7 @@ describe('ShellComponent', () => {
           },
         ]),
         { provide: TitleStrategy, useExisting: PageTitleService },
+        { provide: AuthService, useValue: authService },
         {
           provide: ViewportService,
           useValue: { isPhone$: of(layout === 'phone'), isTablet$: of(layout === 'tablet') },
@@ -59,6 +65,13 @@ describe('ShellComponent', () => {
     await harness.navigateByUrl('/users');
     expect(await firstValueFrom(search.query$)).toBe('');
     expect(query('.header__title')?.textContent).toContain('Users');
+  });
+
+  it('shows the signed-in user and signs out from the sidebar', async () => {
+    await setUp();
+    expect(query('.sidebar__user-email')?.textContent).toBe('admin@buzzer.dev');
+    (query('.sidebar__sign-out') as HTMLButtonElement).click();
+    expect(authService.signOut).toHaveBeenCalledTimes(1);
   });
 
   it('collapses the sidebar', async () => {

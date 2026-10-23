@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, sig
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { distinctUntilChanged, filter, map } from 'rxjs';
+import { AuthService } from '../../../core/auth/services/auth.service';
 import { PageTitleService } from '../../../core/page-title.service';
 import { NAV_GROUPS } from '../../constants/navigation.constants';
 import { SearchService } from '../../services/search.service';
@@ -26,8 +27,10 @@ export class ShellComponent {
   private readonly pageTitleService = inject(PageTitleService);
   private readonly searchService = inject(SearchService);
   private readonly viewport = inject(ViewportService);
+  private readonly authService = inject(AuthService);
 
   readonly navGroups = NAV_GROUPS;
+  readonly userEmail = computed(() => this.authService.currentUser()?.email ?? null);
   readonly pageTitle = toSignal(this.pageTitleService.pageTitle$, { initialValue: '' });
   readonly searchQuery = toSignal(this.searchService.query$, { initialValue: '' });
 
@@ -64,5 +67,10 @@ export class ShellComponent {
 
   onSearchQueryChange(query: string): void {
     this.searchService.setQuery(query);
+  }
+
+  onSignOut(): void {
+    this.closeDrawer();
+    this.authService.signOut();
   }
 }

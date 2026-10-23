@@ -155,8 +155,65 @@ $transition: 0.2s ease;
     }
   }
 
-  &__item-label {
+  &__item-label,
+  &__user-details {
     transition: opacity $transition;
+  }
+
+  &__user {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    overflow: hidden;
+    border-top: 1px solid var(--color-white-10);
+    transition: padding $transition;
+  }
+
+  &__avatar {
+    @include type.headline-medium;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: var(--color-yellow);
+    color: var(--color-white);
+  }
+
+  &__user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    font-family: var(--font-body);
+    font-size: 12px;
+    line-height: normal;
+  }
+
+  &__user-email {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__sign-out {
+    align-self: flex-start;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-yellow);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-white);
+      outline-offset: 2px;
+    }
   }
 
   &--collapsed {
@@ -187,8 +244,13 @@ $transition: 0.2s ease;
   }
 
   // Faded out but still the link's accessible name.
-  &--collapsed &__item-label {
+  &--collapsed &__item-label,
+  &--collapsed &__user-details {
     opacity: 0;
+  }
+
+  &--collapsed &__user {
+    padding-inline: 7px;
   }
 
   @media (prefers-reduced-motion: reduce) {

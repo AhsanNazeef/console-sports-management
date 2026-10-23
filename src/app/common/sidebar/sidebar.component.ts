@@ -13,9 +13,11 @@ import { NavGroup } from '../models/navigation.model';
 export class SidebarComponent {
   readonly groups = input.required<readonly NavGroup[]>();
   readonly collapsed = input(false);
+  readonly userEmail = input<string | null>(null);
 
   readonly collapsedChange = output<boolean>();
   readonly itemSelected = output<void>();
+  readonly signOut = output<void>();
 
   readonly closedGroupIds = signal<ReadonlySet<string>>(new Set());
 
