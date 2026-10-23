@@ -28,19 +28,7 @@
   }
 
   &__select {
-    @include form.control;
-    appearance: none;
-    padding-right: 40px;
-    background-image: url('/assets/icons/ic_dropdown.svg');
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 20px;
-    cursor: pointer;
-
-    option {
-      background-color: var(--color-base-light);
-      color: var(--color-white);
-    }
+    @include form.select;
   }
 
   &__hint {

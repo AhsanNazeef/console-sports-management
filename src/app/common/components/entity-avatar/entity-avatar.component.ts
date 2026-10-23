@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } fro
 import { accentFor } from '../../utils/accent.util';
 
 // An entity's icon on a white circle, or its first letter on a palette colour when there is no working icon.
-// Decorative: the entity's name is always shown next to it.
+// A person's photo fills the shape instead. Decorative: the name is always shown next to it.
 @Component({
   selector: 'app-entity-avatar',
   standalone: true,
@@ -13,6 +13,8 @@ import { accentFor } from '../../utils/accent.util';
     'aria-hidden': 'true',
     '[style.width.px]': 'size()',
     '[style.height.px]': 'size()',
+    '[class.entity-avatar--photo]': 'photo()',
+    '[class.entity-avatar--rounded]': "shape() === 'rounded'",
   },
 })
 export class EntityAvatarComponent {
@@ -21,6 +23,10 @@ export class EntityAvatarComponent {
   // Keeps the badge colour stable; usually the entity id.
   readonly seed = input('');
   readonly size = input(20);
+  // A photo (a person) rather than an icon (a sport or club).
+  readonly photo = input(false);
+  // Figma's staff cards use rounded squares; everything else is a circle.
+  readonly shape = input<'circle' | 'rounded'>('circle');
 
   // Resets whenever a different image is given.
   readonly imageFailed = linkedSignal({ source: this.imageUrl, computation: () => false });

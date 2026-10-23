@@ -16,6 +16,7 @@ interface Row {
       [columns]="columns"
       [rows]="rows"
       [loading]="loading"
+      [minWidth]="minWidth"
       emptyMessage="None yet."
     >
       <ng-template let-row let-key="key">
@@ -30,6 +31,7 @@ interface Row {
 })
 class HostComponent {
   loading = false;
+  minWidth: string | null = null;
   columns: DataTableColumn[] = [
     { key: 'name', label: 'Governing Body' },
     { key: 'count', label: 'Organisations', shaded: true },
@@ -77,6 +79,13 @@ describe('DataTableComponent', () => {
 
     render((host) => (host.loading = false));
     expect(element.querySelector('.data-table__empty')?.textContent).toBe('None yet.');
+  });
+
+  it('can be given a wider minimum, so narrow screens scroll it instead of squeezing the columns', () => {
+    const table = element.querySelector('table') as HTMLTableElement;
+    expect(table.style.minWidth).toBe('');
+    render((host) => (host.minWidth = '640px'));
+    expect(table.style.minWidth).toBe('640px');
   });
 
   it('keeps the rows, dimmed, during a later load', () => {

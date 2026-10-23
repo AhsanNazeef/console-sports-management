@@ -48,6 +48,29 @@
   }
 }
 
+// A native select with the design system's dropdown arrow.
+@mixin select {
+  @include control;
+  appearance: none;
+  padding-right: 40px;
+  background-image: url('/assets/icons/ic_dropdown.svg');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  cursor: pointer;
+
+  option {
+    background-color: var(--color-base-light);
+    color: var(--color-white);
+  }
+}
+
+// A native date input; the dark colour scheme keeps the browser's calendar button visible.
+@mixin date {
+  @include control;
+  color-scheme: dark;
+}
+
 @mixin error {
   @include type.label-large;
   margin: -8px 0;

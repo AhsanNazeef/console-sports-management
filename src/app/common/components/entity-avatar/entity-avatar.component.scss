@@ -14,6 +14,17 @@
   object-fit: contain;
 }
 
+// Photos fill the shape.
+:host(.entity-avatar--photo) .entity-avatar__image {
+  padding: 0;
+  object-fit: cover;
+}
+
+:host(.entity-avatar--rounded) .entity-avatar__image,
+:host(.entity-avatar--rounded) .entity-avatar__badge {
+  border-radius: var(--radius-md);
+}
+
 .entity-avatar__badge {
   display: flex;
   align-items: center;

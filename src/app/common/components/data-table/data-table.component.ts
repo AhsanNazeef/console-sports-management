@@ -32,6 +32,8 @@ export class DataTableComponent<T extends { id: string }> {
   readonly loading = input(false);
   readonly emptyMessage = input('Nothing here yet.');
   readonly skeletonRowCount = input(10);
+  // Below this width the table scrolls sideways instead of squeezing its columns (480px when not set).
+  readonly minWidth = input<string | null>(null);
 
   readonly cell = contentChild.required<TemplateRef<DataTableCellContext<T>>>(TemplateRef);
 

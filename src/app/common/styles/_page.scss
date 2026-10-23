@@ -87,6 +87,32 @@
   }
 }
 
+// Edit and delete icon buttons at the end of a row or on a card.
+@mixin row-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+@mixin row-action {
+  display: flex;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+  opacity: 0.85;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-white);
+    outline-offset: 2px;
+  }
+}
+
 @mixin name-cell {
   display: flex;
   align-items: center;

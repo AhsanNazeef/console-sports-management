@@ -1,5 +1,5 @@
 <div class="data-table" [class.data-table--loading]="loading()" [attr.aria-busy]="loading()">
-  <table class="data-table__table">
+  <table class="data-table__table" [style.min-width]="minWidth()">
     <caption class="data-table__caption" [textContent]="label()"></caption>
     <thead>
       <tr>

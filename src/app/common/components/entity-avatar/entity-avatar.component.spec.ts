@@ -30,6 +30,15 @@ describe('EntityAvatarComponent', () => {
     expect(element.querySelector('.entity-avatar__badge')).toBeTruthy();
   });
 
+  it('can show a person’s photo in a rounded square', () => {
+    expect(element.classList).not.toContain('entity-avatar--photo');
+    fixture.componentRef.setInput('photo', true);
+    fixture.componentRef.setInput('shape', 'rounded');
+    fixture.detectChanges();
+    expect(element.classList).toContain('entity-avatar--photo');
+    expect(element.classList).toContain('entity-avatar--rounded');
+  });
+
   it('takes the requested size', () => {
     fixture.componentRef.setInput('size', 44);
     fixture.detectChanges();

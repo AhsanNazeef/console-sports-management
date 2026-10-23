@@ -1,14 +1,34 @@
 const DATE = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 const TIME = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+// Calendar dates (such as an agreement end) are stored as midnight UTC, so they are read in UTC.
+const CALENDAR_DATE = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
 
 // "Apr 13, 2025 at 23:15", the format of the Figma detail cards, in the viewer's time zone.
 export function formatDateTime(value: string | null | undefined): string | null {
+  const date = parse(value);
+  return date ? `${DATE.format(date)} at ${TIME.format(date)}` : null;
+}
+
+// "Apr 13, 2025" for a calendar date, the same on every time zone.
+export function formatDate(value: string | null | undefined): string | null {
+  const date = parse(value);
+  return date ? CALENDAR_DATE.format(date) : null;
+}
+
+// The YYYY-MM-DD value a date input expects, from a stored calendar date.
+export function toDateInputValue(value: string | null | undefined): string {
+  return parse(value)?.toISOString().slice(0, 10) ?? '';
+}
+
+function parse(value: string | null | undefined): Date | null {
   if (!value) {
     return null;
   }
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-  return `${DATE.format(date)} at ${TIME.format(date)}`;
+  return Number.isNaN(date.getTime()) ? null : date;
 }
