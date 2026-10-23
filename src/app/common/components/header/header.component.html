@@ -1,0 +1,29 @@
+<header class="header">
+  <h1 class="header__title">{{ heading() }}</h1>
+  @if (showSearch()) {
+    <div class="header__search" role="search">
+      <label class="header__search-field">
+        <img
+          class="header__search-icon"
+          src="assets/icons/ic_search.svg"
+          width="24"
+          height="24"
+          alt=""
+          aria-hidden="true"
+        />
+        <input
+          class="header__search-input"
+          type="text"
+          name="search"
+          placeholder="Search"
+          aria-label="Search"
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+        />
+      </label>
+      @if (searchQuery()) {
+        <button type="button" class="header__search-cancel" (click)="clearSearch()">Cancel</button>
+      }
+    </div>
+  }
+</header>
