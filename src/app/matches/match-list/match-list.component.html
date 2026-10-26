@@ -36,7 +36,13 @@
           </div>
         }
         @case ('teams') {
-          <span class="match-list__ellipsis" [title]="matchTitle(row)">{{ matchTitle(row) }}</span>
+          <a
+            class="match-list__row-link"
+            [routerLink]="['/matches', row.id]"
+            [title]="matchTitle(row)"
+            skipLocationChange
+            >{{ matchTitle(row) }}</a
+          >
         }
         @case ('scheduledAt') {
           {{ formatDateTime(row.scheduledAt) ?? '—' }}

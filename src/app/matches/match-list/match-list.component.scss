@@ -24,6 +24,11 @@
     @include page.name-cell;
   }
 
+  &__row-link {
+    @include page.row-link;
+    display: block;
+  }
+
   &__ellipsis {
     display: block;
     overflow: hidden;

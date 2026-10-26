@@ -1,0 +1,81 @@
+<div class="match-detail">
+  <app-breadcrumbs [items]="breadcrumbs()" [skipLocationChange]="true" />
+
+  @if (notFound()) {
+    <div class="match-detail__missing" role="alert">
+      <span>This match doesn't exist or has been deleted.</span>
+      <a routerLink="/matches" skipLocationChange>Back to the matches</a>
+    </div>
+  } @else {
+    <app-match-header [match]="match.value()" [score]="score()">
+      @if (statusActions().length > 0) {
+        <div class="match-detail__status-actions" match-header-actions>
+          @for (action of statusActions(); track action.status) {
+            <app-button
+              size="small"
+              [variant]="action.status === 'LIVE' ? 'primary' : 'outline'"
+              [disabled]="isSaving()"
+              (clicked)="requestStatus(action)"
+            >
+              {{ action.label }}
+            </app-button>
+          }
+        </div>
+      }
+    </app-match-header>
+
+    @if (statusError(); as message) {
+      @if (!confirming()) {
+        <div class="match-detail__error" role="alert">{{ message }}</div>
+      }
+    }
+
+    <div class="match-detail__sections">
+      <section class="match-detail__section" aria-labelledby="match-timeline-title">
+        <div class="match-detail__section-header">
+          <h2 id="match-timeline-title" class="match-detail__section-title">Timeline</h2>
+          @if (timeline.errorStatus() !== null) {
+            <app-button variant="outline" size="small" (clicked)="timeline.reload()">Try again</app-button>
+          }
+        </div>
+        <app-match-timeline
+          [events]="timeline.value() ?? []"
+          [teams]="teams()"
+          [loading]="timeline.loading()"
+          [failed]="timeline.errorStatus() !== null && !timeline.value()"
+        />
+      </section>
+
+      <section class="match-detail__section" aria-labelledby="match-stats-title">
+        <div class="match-detail__section-header">
+          <h2 id="match-stats-title" class="match-detail__section-title">Stats</h2>
+          @if (stats.errorStatus() !== null) {
+            <app-button variant="outline" size="small" (clicked)="stats.reload()">Try again</app-button>
+          }
+        </div>
+        <app-match-stats
+          [stats]="stats.value()"
+          [loading]="stats.loading()"
+          [failed]="stats.errorStatus() !== null && !stats.value()"
+        />
+      </section>
+    </div>
+  }
+</div>
+
+<app-dialog
+  [icon]="confirming()?.status === 'CANCELLED' ? 'ic_delete' : 'ic_verified_badge'"
+  [primaryLabel]="confirming()?.label ?? 'OK'"
+  secondaryLabel="Go back"
+  [open]="!!confirming()"
+  [heading]="confirmHeading()"
+  [description]="confirmDescription()"
+  [primaryDisabled]="isSaving()"
+  (primary)="changeStatus()"
+  (secondary)="cancelConfirm()"
+  (closed)="cancelConfirm()"
+>
+  @if (statusError(); as message) {
+    <p class="match-detail__dialog-error" role="alert">{{ message }}</p>
+  }
+</app-dialog>

@@ -1,0 +1,39 @@
+@use '../../common/styles/breakpoints' as bp;
+@use '../../common/styles/page';
+@use '../../common/styles/typography' as type;
+
+.match-detail {
+  @include page.detail-page;
+
+  &__status-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  // Timeline beside the stats on desktop, stacked below it.
+  &__sections {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    align-items: start;
+    gap: 8px 16px;
+
+    @include bp.below-desktop {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  &__dialog-error {
+    @include type.label-large;
+    margin: 0;
+    color: var(--color-red);
+    text-align: center;
+  }
+}

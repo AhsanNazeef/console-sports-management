@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { catchError, finalize, map, Observable, of, Subject, switchMap } from 'rxjs';
 import { ButtonComponent } from '../../common/components/button/button.component';
 import { DataTableColumn, DataTableComponent } from '../../common/components/data-table/data-table.component';
@@ -47,6 +48,7 @@ type TeamOptions = { teams: MatchTeam[]; error: null } | { teams: null; error: s
     EntityAvatarComponent,
     MatchFormDialogComponent,
     PaginationComponent,
+    RouterLink,
     StatusTagComponent,
     TabsComponent,
   ],
