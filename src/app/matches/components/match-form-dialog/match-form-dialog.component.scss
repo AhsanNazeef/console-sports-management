@@ -1,0 +1,87 @@
+@use '../../../common/styles/breakpoints' as bp;
+@use '../../../common/styles/form';
+@use '../../../common/styles/typography' as type;
+
+.match-form {
+  @include form.form;
+
+  &__fields {
+    @include form.fields;
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+
+    @include bp.phone {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+  }
+
+  &__field {
+    @include form.field;
+  }
+
+  &__label {
+    @include form.label;
+  }
+
+  &__fixed {
+    @include type.body-large;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0;
+    padding: 0 8px;
+    color: var(--color-white);
+  }
+
+  &__muted {
+    @include type.label-large;
+    color: var(--color-white-54);
+  }
+
+  &__select {
+    @include form.select;
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.54;
+    }
+
+    &--invalid,
+    &--invalid:focus {
+      box-shadow: inset 0 0 0 1px var(--color-red);
+    }
+  }
+
+  &__date {
+    @include form.date;
+  }
+
+  &__field-error,
+  &__hint {
+    @include type.label-large;
+    margin: -8px 0 0;
+    padding: 0 8px;
+  }
+
+  &__field-error {
+    color: var(--color-red);
+  }
+
+  &__hint {
+    color: var(--color-white-54);
+  }
+
+  &__error {
+    @include form.error;
+  }
+
+  &__actions {
+    @include form.actions;
+  }
+}

@@ -1,0 +1,119 @@
+<app-modal [open]="open()" [heading]="heading()" (closed)="cancelled.emit()">
+  @if (open()) {
+    <form class="match-form" novalidate (ngSubmit)="onSubmit()">
+      <div class="match-form__fields">
+        @if (match(); as current) {
+          <div class="match-form__field">
+            <span class="match-form__label">Match</span>
+            <p class="match-form__fixed">
+              {{ editingTitle() }} <span class="match-form__muted">({{ current.sport.name }})</span>
+            </p>
+          </div>
+        } @else {
+          <div class="match-form__field">
+            <label class="match-form__label" for="match-sport">Sport</label>
+            <select
+              id="match-sport"
+              class="match-form__select"
+              name="sport"
+              [disabled]="sports() === null"
+              [ngModel]="sportId()"
+              (ngModelChange)="selectSport($event)"
+            >
+              <option value="" disabled>{{ sports() === null ? 'Loading sports…' : 'Choose a sport' }}</option>
+              @for (sport of sports(); track sport.id) {
+                <option [value]="sport.id">{{ sport.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="match-form__row">
+            <div class="match-form__field">
+              <label class="match-form__label" for="match-home-team">Home team</label>
+              <select
+                id="match-home-team"
+                class="match-form__select"
+                name="homeTeam"
+                [disabled]="!sportId() || teamsLoading() || tooFewTeams()"
+                [ngModel]="homeTeamId()"
+                (ngModelChange)="homeTeamId.set($event)"
+              >
+                <option value="" disabled>{{ teamsLoading() ? 'Loading teams…' : 'Choose a team' }}</option>
+                @for (team of teams(); track team.id) {
+                  <option [value]="team.id">{{ team.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="match-form__field">
+              <label class="match-form__label" for="match-away-team">Away team</label>
+              <select
+                id="match-away-team"
+                class="match-form__select"
+                name="awayTeam"
+                [class.match-form__select--invalid]="!!sameTeamError()"
+                [attr.aria-invalid]="!!sameTeamError()"
+                [attr.aria-describedby]="sameTeamError() ? 'match-team-error' : null"
+                [disabled]="!sportId() || teamsLoading() || tooFewTeams()"
+                [ngModel]="awayTeamId()"
+                (ngModelChange)="awayTeamId.set($event)"
+              >
+                <option value="" disabled>{{ teamsLoading() ? 'Loading teams…' : 'Choose a team' }}</option>
+                @for (team of teams(); track team.id) {
+                  <option [value]="team.id">{{ team.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          @if (sameTeamError(); as message) {
+            <p id="match-team-error" class="match-form__field-error" role="alert">{{ message }}</p>
+          }
+          @if (tooFewTeams()) {
+            <p class="match-form__hint">
+              This sport has fewer than two teams, so a match can't be scheduled for it yet. Teams are added under
+              Sports.
+            </p>
+          }
+        }
+
+        <div class="match-form__row">
+          <div class="match-form__field">
+            <label class="match-form__label" for="match-scheduled-at">Date and time</label>
+            <input
+              id="match-scheduled-at"
+              class="match-form__date"
+              type="datetime-local"
+              name="scheduledAt"
+              [ngModel]="scheduledAt()"
+              (ngModelChange)="scheduledAt.set($event ?? '')"
+              #scheduledAtModel="ngModel"
+            />
+            @if (shownError(scheduledAtModel, scheduledAtError()); as message) {
+              <p class="match-form__field-error" role="alert">{{ message }}</p>
+            }
+          </div>
+          <div class="match-form__field">
+            <label class="match-form__label" for="match-venue">Venue</label>
+            <app-text-input
+              inputId="match-venue"
+              name="venue"
+              placeholder="Optional"
+              [ngModel]="venue()"
+              (ngModelChange)="venue.set($event)"
+            />
+          </div>
+        </div>
+      </div>
+
+      @if (optionsError() ?? error(); as message) {
+        <p class="match-form__error" role="alert">{{ message }}</p>
+      }
+
+      <div class="match-form__actions">
+        <app-button variant="outline" [fullWidth]="true" (clicked)="cancelled.emit()">Cancel</app-button>
+        <app-button type="submit" [fullWidth]="true" [disabled]="!canSave()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </app-button>
+      </div>
+    </form>
+  }
+</app-modal>
