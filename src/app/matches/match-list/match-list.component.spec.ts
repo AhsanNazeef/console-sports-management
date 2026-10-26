@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
@@ -64,7 +65,13 @@ describe('MatchListPage', () => {
       providers: [
         provideRouter([]),
         { provide: MatchesApiService, useValue: api },
-        { provide: AuthService, useValue: { hasAnyRole: () => canEdit } },
+        {
+          provide: AuthService,
+          useValue: {
+            hasAnyRole: () => canEdit,
+            currentUser: signal({ id: 'u1', email: 'admin@buzzer.dev', role: 'ADMIN' }),
+          },
+        },
       ],
     });
     if (savedQuery) {
