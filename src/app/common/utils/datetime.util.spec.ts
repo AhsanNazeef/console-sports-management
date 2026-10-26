@@ -1,4 +1,10 @@
-import { formatDate, formatDateTime, toDateInputValue } from './datetime.util';
+import {
+  formatDate,
+  formatDateTime,
+  fromDateTimeInputValue,
+  toDateInputValue,
+  toDateTimeInputValue,
+} from './datetime.util';
 
 describe('formatDateTime', () => {
   it('formats a timestamp like the Figma cards', () => {
@@ -23,5 +29,18 @@ describe('toDateInputValue', () => {
   it('gives the YYYY-MM-DD value of a date input', () => {
     expect(toDateInputValue('2027-07-01T00:00:00.000Z')).toBe('2027-07-01');
     expect(toDateInputValue(null)).toBe('');
+  });
+});
+
+describe('toDateTimeInputValue and fromDateTimeInputValue', () => {
+  it('converts between a stored timestamp and the local value of a datetime-local input', () => {
+    const stored = new Date(2026, 10, 1, 18, 30).toISOString();
+    expect(toDateTimeInputValue(stored)).toBe('2026-11-01T18:30');
+    expect(fromDateTimeInputValue('2026-11-01T18:30')).toBe(stored);
+  });
+
+  it('gives an empty value or null for missing input', () => {
+    expect(toDateTimeInputValue(null)).toBe('');
+    expect(fromDateTimeInputValue('')).toBeNull();
   });
 });

@@ -1,0 +1,54 @@
+@use '../../styles/typography' as type;
+
+:host {
+  display: inline-flex;
+}
+
+.status-tag {
+  @include type.label-large-bold;
+  --tone: var(--color-white-54);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
+  border-radius: var(--radius-pill);
+  background-color: color-mix(in srgb, var(--tone) 14%, transparent);
+  color: var(--tone);
+  white-space: nowrap;
+
+  &--yellow {
+    --tone: var(--color-yellow);
+  }
+
+  &--green {
+    --tone: var(--color-green);
+  }
+
+  &--red {
+    --tone: var(--color-red);
+  }
+
+  &--orange {
+    --tone: var(--color-orange);
+  }
+
+  &__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+    animation: status-tag-pulse 1.6s ease-in-out infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+}
+
+@keyframes status-tag-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}

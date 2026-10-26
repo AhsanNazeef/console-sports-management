@@ -4,7 +4,25 @@
     <thead>
       <tr>
         @for (column of columns(); track column.key) {
-          <th scope="col" class="data-table__head" [style.width]="column.width">{{ column.label }}</th>
+          <th scope="col" class="data-table__head" [style.width]="column.width" [attr.aria-sort]="ariaSort(column)">
+            @if (column.sortable) {
+              <button type="button" class="data-table__sort" (click)="sortChange.emit(column.key)">
+                {{ column.label }}
+                <img
+                  class="data-table__sort-icon"
+                  [class.data-table__sort-icon--active]="column.key === sortKey()"
+                  [class.data-table__sort-icon--asc]="column.key === sortKey() && sortOrder() === 'asc'"
+                  src="assets/icons/ic_list_switch.svg"
+                  width="12"
+                  height="12"
+                  alt=""
+                  aria-hidden="true"
+                />
+              </button>
+            } @else {
+              {{ column.label }}
+            }
+          </th>
         }
       </tr>
     </thead>

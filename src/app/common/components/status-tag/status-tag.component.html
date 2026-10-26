@@ -1,0 +1,6 @@
+<span class="status-tag" [class]="'status-tag--' + tone()">
+  @if (pulse()) {
+    <span class="status-tag__dot" aria-hidden="true"></span>
+  }
+  <ng-content />
+</span>

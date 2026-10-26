@@ -17,7 +17,10 @@ interface Row {
       [rows]="rows"
       [loading]="loading"
       [minWidth]="minWidth"
+      [sortKey]="sortKey"
+      [sortOrder]="sortOrder"
       emptyMessage="None yet."
+      (sortChange)="sorted.push($event)"
     >
       <ng-template let-row let-key="key">
         @if (key === 'name') {
@@ -32,6 +35,9 @@ interface Row {
 class HostComponent {
   loading = false;
   minWidth: string | null = null;
+  sortKey: string | null = null;
+  sortOrder: 'asc' | 'desc' = 'asc';
+  sorted: string[] = [];
   columns: DataTableColumn[] = [
     { key: 'name', label: 'Governing Body' },
     { key: 'count', label: 'Organisations', shaded: true },
@@ -60,7 +66,7 @@ describe('DataTableComponent', () => {
   };
 
   it('renders the headers and each cell through the projected template', () => {
-    expect(Array.from(element.querySelectorAll('th')).map((th) => th.textContent)).toEqual([
+    expect(Array.from(element.querySelectorAll('th')).map((th) => th.textContent?.trim())).toEqual([
       'Governing Body',
       'Organisations',
     ]);
@@ -86,6 +92,26 @@ describe('DataTableComponent', () => {
     expect(table.style.minWidth).toBe('');
     render((host) => (host.minWidth = '640px'));
     expect(table.style.minWidth).toBe('640px');
+  });
+
+  it('turns a sortable header into a button and marks the sorted column', () => {
+    expect(element.querySelector('th button')).toBeNull();
+    render((host) => (host.columns = [{ ...host.columns[0], sortable: true }, host.columns[1]]));
+    const [nameHead, countHead] = Array.from(element.querySelectorAll('th'));
+    expect(nameHead.getAttribute('aria-sort')).toBe('none');
+    expect(countHead.hasAttribute('aria-sort')).toBe(false);
+
+    (nameHead.querySelector('button') as HTMLButtonElement).click();
+    expect(fixture.componentInstance.sorted).toEqual(['name']);
+
+    render((host) => {
+      host.sortKey = 'name';
+      host.sortOrder = 'desc';
+    });
+    expect(nameHead.getAttribute('aria-sort')).toBe('descending');
+    render((host) => (host.sortOrder = 'asc'));
+    expect(nameHead.getAttribute('aria-sort')).toBe('ascending');
+    expect(nameHead.querySelector('.data-table__sort-icon--asc')).toBeTruthy();
   });
 
   it('keeps the rows, dimmed, during a later load', () => {

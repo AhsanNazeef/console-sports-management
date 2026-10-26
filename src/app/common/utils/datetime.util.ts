@@ -25,6 +25,21 @@ export function toDateInputValue(value: string | null | undefined): string {
   return parse(value)?.toISOString().slice(0, 10) ?? '';
 }
 
+// The value a datetime-local input expects ("2026-11-01T18:30"), in the viewer's time zone.
+export function toDateTimeInputValue(value: string | null | undefined): string {
+  const date = parse(value);
+  if (!date) {
+    return '';
+  }
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
+// The ISO timestamp for a datetime-local value, which the browser reads in the viewer's time zone.
+export function fromDateTimeInputValue(value: string): string | null {
+  return parse(value)?.toISOString() ?? null;
+}
+
 function parse(value: string | null | undefined): Date | null {
   if (!value) {
     return null;

@@ -37,6 +37,36 @@
     text-align: left;
   }
 
+  &__sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-white);
+      outline-offset: 2px;
+    }
+  }
+
+  &__sort-icon {
+    opacity: 0.54;
+    transition: transform 0.15s ease;
+
+    &--active {
+      opacity: 1;
+    }
+
+    &--asc {
+      transform: rotate(180deg);
+    }
+  }
+
   &__row {
     border-bottom: 1px solid var(--color-white-10);
 
