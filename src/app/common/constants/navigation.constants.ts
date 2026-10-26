@@ -7,7 +7,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     label: 'Match Management',
     items: [
       { label: 'Dashboard', path: '/dashboard', icon: 'ic_graph' },
-      { label: 'Live Matches', path: '/matches', icon: 'ic_video' },
+      { label: 'Matches', path: '/matches', icon: 'ic_video' },
       { label: 'Tournaments', path: '/tournaments', icon: 'ic_featured' },
       { label: 'Sports', path: '/sports', icon: 'ic_sport' },
     ],

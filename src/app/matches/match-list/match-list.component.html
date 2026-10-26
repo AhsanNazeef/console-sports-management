@@ -1,0 +1,117 @@
+<div class="match-list">
+  <div class="match-list__toolbar">
+    <div class="match-list__tabs">
+      <app-tabs [tabs]="statusTabs" [activeId]="list.query().status" (activeIdChange)="selectStatus($event)" />
+    </div>
+    @if (canEdit()) {
+      <app-button variant="outline" size="small" icon="ic_add" (clicked)="openSchedule()">Schedule Match</app-button>
+    }
+  </div>
+
+  @if (list.failed()) {
+    <div class="match-list__error" role="alert">
+      <span>Couldn't load the matches. Please try again.</span>
+      <app-button variant="outline" size="small" (clicked)="list.reload()">Try again</app-button>
+    </div>
+  }
+
+  <app-data-table
+    label="Matches"
+    [columns]="columns()"
+    [rows]="list.rows()"
+    [loading]="list.loading()"
+    [skeletonRowCount]="pageSize"
+    [sortKey]="sortKey()"
+    [sortOrder]="list.query().sortOrder"
+    minWidth="900px"
+    [emptyMessage]="emptyMessage()"
+    (sortChange)="cycleSort($event)"
+  >
+    <ng-template let-row let-key="key">
+      @switch (key) {
+        @case ('sport') {
+          <div class="match-list__name-cell">
+            <app-entity-avatar [name]="row.sport.name" [imageUrl]="row.sport.iconUrl" [seed]="row.sport.id" />
+            <span class="match-list__ellipsis" [title]="row.sport.name">{{ row.sport.name }}</span>
+          </div>
+        }
+        @case ('teams') {
+          <span class="match-list__ellipsis" [title]="matchTitle(row)">{{ matchTitle(row) }}</span>
+        }
+        @case ('scheduledAt') {
+          {{ formatDateTime(row.scheduledAt) ?? '—' }}
+        }
+        @case ('venue') {
+          <span class="match-list__ellipsis" [title]="row.venue ?? ''">{{ row.venue || '—' }}</span>
+        }
+        @case ('status') {
+          <app-status-tag [tone]="statusTone(row.status)" [pulse]="row.status === 'LIVE'">
+            {{ statusLabel(row.status) }}
+          </app-status-tag>
+        }
+        @case ('score') {
+          {{ matchScore(row) }}
+        }
+        @case ('actions') {
+          <div class="match-list__actions">
+            <button
+              type="button"
+              class="match-list__action"
+              [attr.aria-label]="'Edit ' + matchTitle(row)"
+              (click)="openEdit(row)"
+            >
+              <img src="assets/icons/ic_edit.svg" width="16" height="16" alt="" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              class="match-list__action"
+              [attr.aria-label]="'Delete ' + matchTitle(row)"
+              (click)="askToDelete(row)"
+            >
+              <img src="assets/icons/ic_delete.svg" width="16" height="16" alt="" aria-hidden="true" />
+            </button>
+          </div>
+        }
+      }
+    </ng-template>
+  </app-data-table>
+
+  @if (list.total() > 0) {
+    <app-pagination
+      [page]="list.query().page"
+      [pageSize]="pageSize"
+      [total]="list.total()"
+      (pageChange)="list.goToPage($event)"
+    />
+  }
+</div>
+
+<app-match-form-dialog
+  [open]="formOpen()"
+  [match]="editing()"
+  [sports]="sportOptions()"
+  [teams]="teamOptions()"
+  [optionsError]="optionsError()"
+  [saving]="isSaving()"
+  [error]="actionError()"
+  (sportChange)="chooseSport($event)"
+  (save)="saveMatch($event)"
+  (cancelled)="closeForm()"
+/>
+
+<app-dialog
+  icon="ic_delete"
+  primaryLabel="Delete"
+  secondaryLabel="Cancel"
+  [open]="!!deleting()"
+  [heading]="deleteHeading()"
+  description="The match disappears from every list for the whole team."
+  [primaryDisabled]="isSaving()"
+  (primary)="deleteMatch()"
+  (secondary)="cancelDelete()"
+  (closed)="cancelDelete()"
+>
+  @if (actionError(); as message) {
+    <p class="match-list__dialog-error" role="alert">{{ message }}</p>
+  }
+</app-dialog>

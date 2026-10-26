@@ -16,7 +16,11 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', title: 'Dashboard', loadComponent: comingSoon },
-      { path: 'matches', title: 'Live Matches', loadComponent: comingSoon },
+      {
+        path: 'matches',
+        title: 'Matches',
+        loadChildren: () => import('./matches/matches.routes').then((m) => m.matchesRoutes),
+      },
       { path: 'tournaments', title: 'Tournaments', loadComponent: comingSoon },
       {
         path: 'sports',
