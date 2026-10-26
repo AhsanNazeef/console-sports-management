@@ -3,7 +3,8 @@ import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiListResponse, ApiResponse } from '../../common/models/api.model';
-import { MATCH_OPTIONS_LIMIT } from '../constants/matches.constants';
+import { MATCH_OPTIONS_LIMIT, MatchStatusTarget } from '../constants/matches.constants';
+import { MatchEvent, MatchScoreboard, MatchStats } from '../models/match-event.model';
 import { Match, MatchChanges, MatchQuery, MatchSport, MatchTeam, NewMatch } from '../models/match.model';
 
 @Injectable({ providedIn: 'root' })
@@ -34,6 +35,34 @@ export class MatchesApiService {
 
   updateMatch$(id: string, changes: MatchChanges): Observable<Match> {
     return this.http.patch<ApiResponse<Match>>(`${this.baseUrl}/${id}`, changes).pipe(map((response) => response.data));
+  }
+
+  getMatch$(id: string): Observable<Match> {
+    return this.http.get<ApiResponse<Match>>(`${this.baseUrl}/${id}`).pipe(map((response) => response.data));
+  }
+
+  // The backend refuses (400) any move its status rules don't allow.
+  changeStatus$(id: string, status: MatchStatusTarget): Observable<Match> {
+    return this.http
+      .patch<ApiResponse<Match>>(`${this.baseUrl}/${id}/status`, { status })
+      .pipe(map((response) => response.data));
+  }
+
+  // Events in match order.
+  getTimeline$(id: string): Observable<MatchEvent[]> {
+    return this.http
+      .get<ApiResponse<MatchEvent[]>>(`${this.baseUrl}/${id}/timeline`)
+      .pipe(map((response) => response.data));
+  }
+
+  getStats$(id: string): Observable<MatchStats> {
+    return this.http.get<ApiResponse<MatchStats>>(`${this.baseUrl}/${id}/stats`).pipe(map((response) => response.data));
+  }
+
+  getScoreboard$(id: string): Observable<MatchScoreboard> {
+    return this.http
+      .get<ApiResponse<MatchScoreboard>>(`${this.baseUrl}/${id}/scoreboard`)
+      .pipe(map((response) => response.data));
   }
 
   // Soft delete: the match leaves every list.

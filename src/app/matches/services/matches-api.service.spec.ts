@@ -81,4 +81,24 @@ describe('MatchesApiService', () => {
     teamsRequest.flush({ ...EMPTY_PAGE, data: [{ id: 't1', name: 'Away FC' }] });
     expect((await teams).map((team) => team.name)).toEqual(['Away FC']);
   });
+
+  it('reads a match with its scoreboard, timeline and stats, and changes its status', async () => {
+    api.getMatch$('m1').subscribe();
+    http.expectOne(`${MATCHES}/m1`).flush({ success: true, data: { id: 'm1' } });
+
+    const timeline = firstValueFrom(api.getTimeline$('m1'));
+    http.expectOne(`${MATCHES}/m1/timeline`).flush({ success: true, data: [{ id: 'e1', minute: 12 }] });
+    expect((await timeline).map((event) => event.minute)).toEqual([12]);
+
+    api.getStats$('m1').subscribe();
+    http.expectOne(`${MATCHES}/m1/stats`).flush({ success: true, data: { totalEvents: 0 } });
+    api.getScoreboard$('m1').subscribe();
+    http.expectOne(`${MATCHES}/m1/scoreboard`).flush({ success: true, data: { status: 'LIVE' } });
+
+    api.changeStatus$('m1', 'LIVE').subscribe();
+    const patch = http.expectOne(`${MATCHES}/m1/status`);
+    expect(patch.request.method).toBe('PATCH');
+    expect(patch.request.body).toEqual({ status: 'LIVE' });
+    patch.flush({ success: true, data: { id: 'm1', status: 'LIVE' } });
+  });
 });
