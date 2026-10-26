@@ -1,0 +1,41 @@
+<div class="match-stats" [attr.aria-busy]="loading()">
+  @if (stats(); as current) {
+    <table class="match-stats__table">
+      <caption class="match-stats__caption">
+        {{
+          totalLabel()
+        }}
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col" class="match-stats__team">{{ current.home.team }}</th>
+          <th scope="col" class="match-stats__type"><span class="match-stats__hidden">Event</span></th>
+          <th scope="col" class="match-stats__team match-stats__team--away">{{ current.away.team }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.label) {
+          <tr class="match-stats__row">
+            <td class="match-stats__count">{{ row.home }}</td>
+            <th scope="row" class="match-stats__type">{{ row.label }}</th>
+            <td class="match-stats__count match-stats__count--away">{{ row.away }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td class="match-stats__empty" colspan="3">No events yet.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  } @else if (failed()) {
+    <p class="match-stats__empty">The stats could not be loaded.</p>
+  } @else {
+    @for (row of [1, 2, 3]; track row) {
+      <div class="match-stats__skeleton" aria-hidden="true">
+        <app-skeleton width="16px" />
+        <app-skeleton width="72px" />
+        <app-skeleton width="16px" />
+      </div>
+    }
+  }
+</div>

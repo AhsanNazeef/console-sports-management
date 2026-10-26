@@ -1,0 +1,20 @@
+<app-data-table
+  label="Timeline"
+  [columns]="columns"
+  [rows]="rows()"
+  [loading]="loading()"
+  [skeletonRowCount]="3"
+  minWidth="560px"
+  [emptyMessage]="emptyMessage()"
+>
+  <ng-template let-row let-key="key">
+    @switch (key) {
+      @case ('type') {
+        <app-status-tag [tone]="row.tone">{{ row.type }}</app-status-tag>
+      }
+      @default {
+        <span class="match-timeline__text" [title]="row[key]">{{ row[key] }}</span>
+      }
+    }
+  </ng-template>
+</app-data-table>

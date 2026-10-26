@@ -1,0 +1,120 @@
+@use '../../../common/styles/breakpoints' as bp;
+@use '../../../common/styles/typography' as type;
+
+// Same card as the detail pages' header (border, 16px radius and padding, labels over values under a divider).
+.match-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-white-10);
+  border-radius: var(--radius-lg);
+
+  &__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    min-height: 32px;
+  }
+
+  &__sport {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  &__sport-name {
+    @include type.label-large;
+    overflow: hidden;
+    color: var(--color-white-54);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  &__board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 8px 0;
+
+    @include bp.phone {
+      gap: 8px;
+    }
+  }
+
+  &__team {
+    @include type.headline-small;
+    margin: 0;
+    overflow-wrap: anywhere;
+
+    &--home {
+      text-align: right;
+    }
+  }
+
+  &__score,
+  &__vs {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  &__score {
+    padding: 4px 16px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-white-10);
+    font-size: 28px;
+    line-height: 36px;
+  }
+
+  &__vs {
+    color: var(--color-white-54);
+    font-size: 16px;
+  }
+
+  &__fields {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px 16px;
+    margin: 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-white-10);
+
+    @include bp.phone {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    padding: 4px 0;
+    font-family: var(--font-body);
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  &__label {
+    color: var(--color-white-54);
+  }
+
+  &__value {
+    margin: 0;
+    overflow: hidden;
+    color: var(--color-white);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

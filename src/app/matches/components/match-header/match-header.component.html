@@ -1,0 +1,50 @@
+<section class="match-header" [attr.aria-busy]="!match()">
+  <div class="match-header__top">
+    @if (match(); as current) {
+      <div class="match-header__sport">
+        <app-entity-avatar [name]="current.sport.name" [imageUrl]="current.sport.iconUrl" [seed]="current.sport.id" />
+        <span class="match-header__sport-name">{{ current.sport.name }}</span>
+      </div>
+      <app-status-tag [tone]="statusTone()" [pulse]="current.status === 'LIVE'">{{ statusLabel() }}</app-status-tag>
+    } @else {
+      <app-skeleton width="20px" height="20px" [circle]="true" />
+      <app-skeleton width="120px" />
+    }
+    <div class="match-header__actions">
+      <ng-content select="[match-header-actions]" />
+    </div>
+  </div>
+
+  <div class="match-header__board">
+    @if (match(); as current) {
+      <h2 class="match-header__team match-header__team--home">{{ current.homeTeam.name }}</h2>
+      @if (hasStarted() && score(); as now) {
+        <output class="match-header__score" [attr.aria-label]="'Score ' + now.home + ' to ' + now.away"
+          >{{ now.home }} – {{ now.away }}</output
+        >
+      } @else {
+        <span class="match-header__vs">vs</span>
+      }
+      <h2 class="match-header__team match-header__team--away">{{ current.awayTeam.name }}</h2>
+    } @else {
+      <app-skeleton width="140px" height="24px" />
+      <app-skeleton width="64px" height="32px" />
+      <app-skeleton width="140px" height="24px" />
+    }
+  </div>
+
+  <dl class="match-header__fields">
+    @for (field of fields(); track field.label) {
+      <div class="match-header__field">
+        <dt class="match-header__label">{{ field.label }}</dt>
+        <dd class="match-header__value">
+          @if (field.value === null) {
+            <app-skeleton width="96px" />
+          } @else {
+            {{ field.value }}
+          }
+        </dd>
+      </div>
+    }
+  </dl>
+</section>

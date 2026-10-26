@@ -1,0 +1,9 @@
+:host {
+  display: block;
+}
+
+.match-timeline__text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
