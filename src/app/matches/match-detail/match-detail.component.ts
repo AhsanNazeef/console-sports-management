@@ -1,23 +1,38 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  input,
+  linkedSignal,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { distinctUntilChanged, filter, finalize, forkJoin, map, switchMap } from 'rxjs';
 import { Breadcrumb, BreadcrumbsComponent } from '../../common/components/breadcrumbs/breadcrumbs.component';
 import { ButtonComponent } from '../../common/components/button/button.component';
 import { DialogComponent } from '../../common/components/dialog/dialog.component';
+import { describeHttpError } from '../../common/utils/http-error.util';
 import { createReloadable } from '../../common/utils/reloadable.util';
 import { AuthService } from '../../core/auth/services/auth.service';
+import { MatchEventFormComponent } from '../components/match-event-form/match-event-form.component';
 import { MatchHeaderComponent, MatchScore } from '../components/match-header/match-header.component';
 import { MatchStatsComponent } from '../components/match-stats/match-stats.component';
 import { MatchTimelineComponent } from '../components/match-timeline/match-timeline.component';
 import { MATCH_EDITOR_ROLES } from '../constants/matches.constants';
+import { MatchEvent, MatchLiveUpdate, NewMatchEvent } from '../models/match-event.model';
+import { MatchLiveService } from '../services/match-live.service';
 import { MatchesApiService } from '../services/matches-api.service';
 import { MatchStatusAction, matchStatusActions } from '../utils/match-status.util';
-import { describeMatchError, matchScore, matchTitle } from '../utils/match.util';
+import { describeMatchError, matchScore, matchTitle, mergeEvents } from '../utils/match.util';
 
 // A match opened from the Matches table: header with the score, status buttons that follow the backend's rules,
-// the timeline of events and the per-team stats. The address bar keeps showing /matches.
+// the Add Event panel while it is live, the timeline of events and the per-team stats. The address bar keeps
+// showing /matches. While the page is open it follows the match over Socket.IO (no polling), so changes made in
+// another window show up here without a refresh.
 @Component({
   selector: 'app-match-detail-page',
   standalone: true,
@@ -25,6 +40,7 @@ import { describeMatchError, matchScore, matchTitle } from '../utils/match.util'
     BreadcrumbsComponent,
     ButtonComponent,
     DialogComponent,
+    MatchEventFormComponent,
     MatchHeaderComponent,
     MatchStatsComponent,
     MatchTimelineComponent,
@@ -36,6 +52,7 @@ import { describeMatchError, matchScore, matchTitle } from '../utils/match.util'
 })
 export class MatchDetailPage {
   private readonly matchesApi = inject(MatchesApiService);
+  private readonly matchLive = inject(MatchLiveService);
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -46,6 +63,21 @@ export class MatchDetailPage {
   readonly scoreboard = createReloadable((id) => this.matchesApi.getScoreboard$(id), this.matchId);
   readonly timeline = createReloadable((id) => this.matchesApi.getTimeline$(id), this.matchId);
   readonly stats = createReloadable((id) => this.matchesApi.getStats$(id), this.matchId);
+
+  // Both teams' players, to fill the Add Event form and to name the players in live events.
+  private readonly teamIds = computed(() => {
+    const match = this.match.value();
+    return match ? `${match.homeTeamId},${match.awayTeamId}` : '';
+  });
+  readonly players = createReloadable(
+    (ids) =>
+      forkJoin(ids.split(',').map((teamId) => this.matchesApi.getPlayers$(teamId))).pipe(map((lists) => lists.flat())),
+    this.teamIds
+  );
+
+  // The loaded timeline and scoreboard, kept up to date by live messages until they are loaded again.
+  readonly events = linkedSignal<readonly MatchEvent[]>(() => this.timeline.value() ?? []);
+  readonly latestScoreboard = linkedSignal(() => this.scoreboard.value());
 
   readonly canEdit = computed(() => this.authService.hasAnyRole(MATCH_EDITOR_ROLES));
   readonly notFound = computed(() => !this.match.value() && this.match.errorStatus() === 404);
@@ -63,7 +95,7 @@ export class MatchDetailPage {
   });
   // The scoreboard's score, else the match record's.
   readonly score = computed<MatchScore | null>(() => {
-    const scoreboard = this.scoreboard.value();
+    const scoreboard = this.latestScoreboard();
     const match = this.match.value();
     if (scoreboard) return { home: scoreboard.home.score, away: scoreboard.away.score };
     return match ? { home: match.homeScore, away: match.awayScore } : null;
@@ -74,9 +106,15 @@ export class MatchDetailPage {
     return match && this.canEdit() ? matchStatusActions(match.status) : [];
   });
 
+  // Events can only be added to a live match (the backend answers 400 otherwise).
+  readonly showEventForm = computed(() => this.canEdit() && this.match.value()?.status === 'LIVE');
+
   readonly confirming = signal<MatchStatusAction | null>(null);
   readonly isSaving = signal(false);
   readonly statusError = signal<string | null>(null);
+  readonly addingEvent = signal(false);
+  readonly eventError = signal<string | null>(null);
+  readonly eventFormReset = signal(0);
 
   readonly confirmHeading = computed(() => {
     const action = this.confirming();
@@ -90,6 +128,18 @@ export class MatchDetailPage {
       ? `The final score will be ${matchScore(match)}. A finished match can't be changed or started again.`
       : "A cancelled match can't be started again.";
   });
+
+  constructor() {
+    // Joins the match's room while the page shows it and leaves it when the page closes or shows another match.
+    toObservable(this.matchId)
+      .pipe(
+        filter((id) => !!id),
+        distinctUntilChanged(),
+        switchMap((id) => this.matchLive.watch$(id)),
+        takeUntilDestroyed()
+      )
+      .subscribe((update) => this.applyLiveUpdate(update));
+  }
 
   requestStatus(action: MatchStatusAction): void {
     this.statusError.set(null);
@@ -128,6 +178,69 @@ export class MatchDetailPage {
           this.refresh();
         },
       });
+  }
+
+  addEvent(input: NewMatchEvent): void {
+    if (this.addingEvent()) {
+      return;
+    }
+    this.addingEvent.set(true);
+    this.eventError.set(null);
+    this.matchesApi
+      .addEvent$(this.matchId(), input)
+      .pipe(
+        finalize(() => this.addingEvent.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: (event) => {
+          this.eventFormReset.update((key) => key + 1);
+          // The socket usually brings the event first; whichever comes second changes nothing.
+          if (this.addArrivedEvent(event)) {
+            this.scoreboard.reload();
+          }
+        },
+        error: (error: unknown) => {
+          if (error instanceof HttpErrorResponse && error.status === 400) {
+            this.refresh();
+          }
+          this.eventError.set(this.describeEventError(error));
+        },
+      });
+  }
+
+  private applyLiveUpdate(update: MatchLiveUpdate): void {
+    switch (update.kind) {
+      case 'event':
+        this.addArrivedEvent(update.event);
+        break;
+      case 'scoreboard':
+        this.latestScoreboard.set(update.scoreboard);
+        break;
+      case 'status':
+        // The match record has the start and finish times that go with the new status.
+        if (update.status !== this.match.value()?.status) {
+          this.refresh();
+        }
+        break;
+    }
+  }
+
+  // Adds an event to the timeline unless it is already there, and then refreshes the stats.
+  private addArrivedEvent(event: MatchEvent): boolean {
+    const current = this.events();
+    const merged = mergeEvents(current, [event]);
+    if (merged === current) {
+      return false;
+    }
+    this.events.set(merged);
+    this.stats.reload();
+    return true;
+  }
+
+  // The backend's 400s for events are readable, for example "Events can only be added to a live match".
+  private describeEventError(error: unknown): string {
+    return describeHttpError(error, "Couldn't add the event. Please try again.");
   }
 
   private refresh(): void {

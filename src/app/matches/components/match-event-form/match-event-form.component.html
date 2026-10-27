@@ -1,0 +1,94 @@
+<!-- Rebuilt on every reset, so the cleared fields start untouched and show no error until they're edited again. -->
+@for (round of [resetKey()]; track round) {
+  <form class="event-form" novalidate (ngSubmit)="onSubmit()">
+    <div class="event-form__fields">
+      <div class="event-form__field">
+        <label class="event-form__label" for="event-type">Type</label>
+        <select
+          id="event-type"
+          class="event-form__select"
+          name="type"
+          [ngModel]="type()"
+          (ngModelChange)="type.set($event)"
+        >
+          @for (option of eventTypes; track option.type) {
+            <option [value]="option.type">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="event-form__field event-form__field--minute">
+        <label class="event-form__label" for="event-minute">Minute</label>
+        <app-text-input
+          inputId="event-minute"
+          name="minute"
+          placeholder="0"
+          [error]="shownError(minuteModel, minuteError())"
+          [ngModel]="minute()"
+          (ngModelChange)="minute.set($event)"
+          #minuteModel="ngModel"
+        />
+      </div>
+
+      <div class="event-form__field">
+        <label class="event-form__label" for="event-team">Team{{ type() === 'GOAL' ? '' : ' (optional)' }}</label>
+        <select
+          id="event-team"
+          class="event-form__select"
+          name="team"
+          [attr.aria-describedby]="teamError() ? 'event-team-hint' : null"
+          [ngModel]="teamId()"
+          (ngModelChange)="teamId.set($event)"
+        >
+          <option value="">{{ type() === 'GOAL' ? 'Choose a team' : 'No team' }}</option>
+          @for (team of teams(); track team.id) {
+            <option [value]="team.id">{{ team.name }}</option>
+          }
+        </select>
+        @if (teamError(); as message) {
+          <p id="event-team-hint" class="event-form__hint">{{ message }}</p>
+        }
+      </div>
+
+      <div class="event-form__field">
+        <label class="event-form__label" for="event-player">Player (optional)</label>
+        <select
+          id="event-player"
+          class="event-form__select"
+          name="player"
+          [disabled]="!teamId()"
+          [ngModel]="playerId()"
+          (ngModelChange)="playerId.set($event)"
+        >
+          <option value="">
+            {{ teamId() && teamPlayers().length === 0 ? 'No players in this team' : 'No player' }}
+          </option>
+          @for (player of teamPlayers(); track player.id) {
+            <option [value]="player.id">{{ playerName(player) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="event-form__field event-form__field--detail">
+        <label class="event-form__label" for="event-detail">Detail (optional)</label>
+        <app-text-input
+          inputId="event-detail"
+          name="detail"
+          placeholder="Assist, reason, …"
+          [ngModel]="detail()"
+          (ngModelChange)="detail.set($event)"
+        />
+      </div>
+    </div>
+
+    @if (error(); as message) {
+      <p class="event-form__error" role="alert">{{ message }}</p>
+    }
+
+    <div class="event-form__actions">
+      <app-button type="submit" size="small" icon="ic_add" [disabled]="!canAdd()">
+        {{ saving() ? 'Adding…' : 'Add Event' }}
+      </app-button>
+    </div>
+  </form>
+}

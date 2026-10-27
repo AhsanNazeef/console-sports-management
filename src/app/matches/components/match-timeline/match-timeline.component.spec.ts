@@ -22,7 +22,7 @@ describe('MatchTimelineComponent', () => {
       matchEvent('e1', 12, {
         team: HOME,
         playerId: 'p1',
-        player: { id: 'p1', firstName: 'Ivan', lastName: 'Gloves', jerseyNumber: 1 },
+        player: { id: 'p1', firstName: 'Ivan', lastName: 'Gloves', jerseyNumber: 1, teamId: HOME.id },
         detail: 'Header',
       }),
       matchEvent('e2', 30, { type: 'YELLOW_CARD', teamId: null }),
@@ -39,7 +39,9 @@ describe('MatchTimelineComponent', () => {
   it('names the team and player of a live event from the loaded teams and players', () => {
     fixture.componentRef.setInput('events', [matchEvent('e1', 5, { teamId: AWAY.id, playerId: 'p9' })]);
     fixture.componentRef.setInput('teams', [HOME, AWAY]);
-    fixture.componentRef.setInput('players', [{ id: 'p9', firstName: 'Ana', lastName: 'Silva', jerseyNumber: 9 }]);
+    fixture.componentRef.setInput('players', [
+      { id: 'p9', firstName: 'Ana', lastName: 'Silva', jerseyNumber: 9, teamId: AWAY.id },
+    ]);
     fixture.detectChanges();
     expect(rows()[0].slice(2, 4)).toEqual(['Buzzer United', 'Ana Silva']);
   });

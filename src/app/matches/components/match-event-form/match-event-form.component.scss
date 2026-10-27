@@ -1,0 +1,70 @@
+@use '../../../common/styles/breakpoints' as bp;
+@use '../../../common/styles/form';
+@use '../../../common/styles/typography' as type;
+
+:host {
+  display: block;
+}
+
+.event-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-white-10);
+  border-radius: var(--radius-lg);
+
+  // Type, minute, team and player on one row on desktop; the detail note takes the full width below.
+  &__fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 96px repeat(2, minmax(0, 1fr));
+    gap: 12px 8px;
+
+    @include bp.below-desktop {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @include bp.phone {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  &__field {
+    @include form.field;
+
+    &--detail {
+      grid-column: 1 / -1;
+    }
+  }
+
+  &__label {
+    @include form.label;
+  }
+
+  &__select {
+    @include form.select;
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.54;
+    }
+  }
+
+  &__hint {
+    @include type.label-large;
+    margin: -4px 0 0;
+    padding: 0 8px;
+    color: var(--color-white-54);
+  }
+
+  &__error {
+    @include type.label-large;
+    margin: 0;
+    color: var(--color-red);
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+}

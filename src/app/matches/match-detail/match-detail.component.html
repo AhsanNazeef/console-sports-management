@@ -30,6 +30,20 @@
       }
     }
 
+    @if (showEventForm()) {
+      <section class="match-detail__section" aria-labelledby="match-event-form-title">
+        <h2 id="match-event-form-title" class="match-detail__section-title">Add Event</h2>
+        <app-match-event-form
+          [teams]="teams()"
+          [players]="players.value() ?? []"
+          [saving]="addingEvent()"
+          [error]="eventError()"
+          [resetKey]="eventFormReset()"
+          (add)="addEvent($event)"
+        />
+      </section>
+    }
+
     <div class="match-detail__sections">
       <section class="match-detail__section" aria-labelledby="match-timeline-title">
         <div class="match-detail__section-header">
@@ -39,8 +53,9 @@
           }
         </div>
         <app-match-timeline
-          [events]="timeline.value() ?? []"
+          [events]="events()"
           [teams]="teams()"
+          [players]="players.value() ?? []"
           [loading]="timeline.loading()"
           [failed]="timeline.errorStatus() !== null && !timeline.value()"
         />
