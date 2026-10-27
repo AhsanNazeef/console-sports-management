@@ -8,6 +8,7 @@ export interface MatchPlayer {
   firstName: string;
   lastName: string;
   jerseyNumber: number | null;
+  teamId: string;
 }
 
 // An event from GET /matches/:id/timeline, which embeds its team and player. Events pushed live over the socket
@@ -23,6 +24,15 @@ export interface MatchEvent {
   createdAt: string;
   team?: MatchTeam | null;
   player?: MatchPlayer | null;
+}
+
+// Body for POST /matches/:id/events. A goal only changes the score when it names the team.
+export interface NewMatchEvent {
+  type: MatchEventType;
+  minute: number;
+  teamId?: string;
+  playerId?: string;
+  detail?: string;
 }
 
 export interface TeamEventCounts {
@@ -52,3 +62,15 @@ export interface MatchScoreboard {
   away: ScoreboardSide;
   startedAt: string | null;
 }
+
+// The match:status message: the match id and its new status.
+export interface MatchStatusUpdate {
+  id: string;
+  status: MatchStatus;
+}
+
+// What the live connection reports for a watched match.
+export type MatchLiveUpdate =
+  | { kind: 'event'; event: MatchEvent }
+  | { kind: 'scoreboard'; scoreboard: MatchScoreboard }
+  | { kind: 'status'; status: MatchStatus };

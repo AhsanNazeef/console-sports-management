@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiErrorBody } from '../../common/models/api.model';
 import { describeHttpError } from '../../common/utils/http-error.util';
+import { MatchEvent } from '../models/match-event.model';
 import { Match } from '../models/match.model';
 
 // "Fan City vs Buzzer United"
@@ -11,6 +12,24 @@ export function matchTitle(match: Pick<Match, 'homeTeam' | 'awayTeam'>): string 
 // "5 – 3" once the match has started; a match that never started has no score yet.
 export function matchScore(match: Pick<Match, 'startedAt' | 'homeScore' | 'awayScore'>): string {
   return match.startedAt ? `${match.homeScore} – ${match.awayScore}` : '—';
+}
+
+// The timeline with newly arrived events added: each event once (by id), in match order (minute, then time added).
+// An event can arrive twice, from the socket and from the POST that created it. With nothing new, the same list
+// comes back.
+export function mergeEvents(timeline: readonly MatchEvent[], arrived: readonly MatchEvent[]): readonly MatchEvent[] {
+  const known = new Set(timeline.map((event) => event.id));
+  const added: MatchEvent[] = [];
+  for (const event of arrived) {
+    if (!known.has(event.id)) {
+      known.add(event.id);
+      added.push(event);
+    }
+  }
+  if (added.length === 0) {
+    return timeline;
+  }
+  return [...timeline, ...added].sort((a, b) => a.minute - b.minute || a.createdAt.localeCompare(b.createdAt));
 }
 
 // Readable messages for the backend's match errors. Its "same team twice" answer is a bare "Validation failed"

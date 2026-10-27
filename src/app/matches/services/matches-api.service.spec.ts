@@ -101,4 +101,18 @@ describe('MatchesApiService', () => {
     expect(patch.request.body).toEqual({ status: 'LIVE' });
     patch.flush({ success: true, data: { id: 'm1', status: 'LIVE' } });
   });
+
+  it('adds an event to a match and lists a team’s players by last name', () => {
+    api.addEvent$('m1', { type: 'GOAL', minute: 12, teamId: 't1' }).subscribe();
+    const post = http.expectOne(`${MATCHES}/m1/events`);
+    expect(post.request.method).toBe('POST');
+    expect(post.request.body).toEqual({ type: 'GOAL', minute: 12, teamId: 't1' });
+    post.flush({ success: true, data: { id: 'e1' } });
+
+    api.getPlayers$('t1').subscribe();
+    const players = http.expectOne((req) => req.url === `${ORGANIZATIONS}/players`);
+    expect(players.request.params.get('teamId')).toBe('t1');
+    expect(players.request.params.get('sortBy')).toBe('lastName');
+    players.flush(EMPTY_PAGE);
+  });
 });

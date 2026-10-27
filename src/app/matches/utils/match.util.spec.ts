@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { describeMatchError, matchScore, matchTitle } from './match.util';
+import { matchEvent } from '../testing/match.fixtures';
+import { describeMatchError, matchScore, matchTitle, mergeEvents } from './match.util';
 
 const team = (name: string): { id: string; name: string; shortName: null; logoUrl: null } => ({
   id: name,
@@ -26,6 +27,27 @@ describe('matchScore', () => {
 
   it('shows a dash before kick-off', () => {
     expect(matchScore({ startedAt: null, homeScore: 0, awayScore: 0 })).toBe('—');
+  });
+});
+
+describe('mergeEvents', () => {
+  const minutes = (events: readonly { minute: number }[]): number[] => events.map((event) => event.minute);
+
+  it('adds a new event in match order', () => {
+    const timeline = [matchEvent('e1', 3), matchEvent('e2', 30)];
+    expect(minutes(mergeEvents(timeline, [matchEvent('e3', 12)]))).toEqual([3, 12, 30]);
+  });
+
+  it('keeps an event that arrives twice only once, and returns the same list then', () => {
+    const timeline = [matchEvent('e1', 3)];
+    expect(mergeEvents(timeline, [matchEvent('e1', 3)])).toBe(timeline);
+    expect(mergeEvents([], [matchEvent('e2', 5), matchEvent('e2', 5)]).length).toBe(1);
+  });
+
+  it('orders events of the same minute by when they were added', () => {
+    const early = matchEvent('a', 10, { createdAt: '2026-11-02T13:40:00.000Z' });
+    const late = matchEvent('b', 10, { createdAt: '2026-11-02T13:41:00.000Z' });
+    expect(mergeEvents([late], [early]).map((event) => event.id)).toEqual(['a', 'b']);
   });
 });
 

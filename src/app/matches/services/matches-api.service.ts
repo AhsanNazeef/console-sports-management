@@ -4,7 +4,7 @@ import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiListResponse, ApiResponse } from '../../common/models/api.model';
 import { MATCH_OPTIONS_LIMIT, MatchStatusTarget } from '../constants/matches.constants';
-import { MatchEvent, MatchScoreboard, MatchStats } from '../models/match-event.model';
+import { MatchEvent, MatchPlayer, MatchScoreboard, MatchStats, NewMatchEvent } from '../models/match-event.model';
 import { Match, MatchChanges, MatchQuery, MatchSport, MatchTeam, NewMatch } from '../models/match.model';
 
 @Injectable({ providedIn: 'root' })
@@ -55,6 +55,13 @@ export class MatchesApiService {
       .pipe(map((response) => response.data));
   }
 
+  // Only a LIVE match takes events; the backend answers 400 otherwise.
+  addEvent$(id: string, input: NewMatchEvent): Observable<MatchEvent> {
+    return this.http
+      .post<ApiResponse<MatchEvent>>(`${this.baseUrl}/${id}/events`, input)
+      .pipe(map((response) => response.data));
+  }
+
   getStats$(id: string): Observable<MatchStats> {
     return this.http.get<ApiResponse<MatchStats>>(`${this.baseUrl}/${id}/stats`).pipe(map((response) => response.data));
   }
@@ -83,6 +90,18 @@ export class MatchesApiService {
     const params = this.optionParams().set('sportId', sportId);
     return this.http
       .get<ApiListResponse<MatchTeam>>(`${this.organizationsUrl}/teams`, { params })
+      .pipe(map((response) => response.data));
+  }
+
+  // A team's players, by last name, for the Add Event form and for naming the players in live events.
+  getPlayers$(teamId: string): Observable<MatchPlayer[]> {
+    const params = new HttpParams()
+      .set('teamId', teamId)
+      .set('limit', MATCH_OPTIONS_LIMIT)
+      .set('sortBy', 'lastName')
+      .set('sortOrder', 'asc');
+    return this.http
+      .get<ApiListResponse<MatchPlayer>>(`${this.organizationsUrl}/players`, { params })
       .pipe(map((response) => response.data));
   }
 
