@@ -67,6 +67,22 @@ describe('ShellComponent', () => {
     expect(query('.header__title')?.textContent).toContain('Users');
   });
 
+  it('keeps the search when only the query of the address changes', async () => {
+    await setUp();
+    const search = TestBed.inject(SearchService);
+    search.setQuery('foot');
+    await harness.navigateByUrl('/sports?page=2');
+    expect(await firstValueFrom(search.query$)).toBe('foot');
+  });
+
+  it('keeps a search the next page brings in its address', async () => {
+    await setUp();
+    const search = TestBed.inject(SearchService);
+    search.setQuery('card');
+    await harness.navigateByUrl('/users?search=card');
+    expect(await firstValueFrom(search.query$)).toBe('card');
+  });
+
   it('shows the signed-in user and signs out from the sidebar', async () => {
     await setUp();
     expect(query('.sidebar__user-email')?.textContent).toBe('admin@buzzer.dev');

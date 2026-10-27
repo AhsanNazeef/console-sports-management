@@ -42,12 +42,15 @@ export class ShellComponent {
   readonly showDrawer = computed(() => this.isPhone() && this.drawerOpen());
 
   constructor() {
-    // Each page starts with an empty search.
+    // Each page starts with an empty search, unless its address brings one (Payments keeps its search in the query and
+    // restores it). It is cleared once the next page has opened, so the page being left can't react to it; changes to
+    // the query alone keep it.
     this.router.events
       .pipe(
         filter((event) => event instanceof NavigationEnd),
-        map((event) => event.urlAfterRedirects.split('?')[0]),
-        distinctUntilChanged(),
+        map((event) => event.urlAfterRedirects),
+        distinctUntilChanged((previous, current) => pathOf(previous) === pathOf(current)),
+        filter((url) => !this.router.parseUrl(url).queryParamMap.has('search')),
         takeUntilDestroyed()
       )
       .subscribe(() => this.searchService.setQuery(''));
@@ -73,4 +76,8 @@ export class ShellComponent {
     this.closeDrawer();
     this.authService.signOut();
   }
+}
+
+function pathOf(url: string): string {
+  return url.split(/[?#]/)[0];
 }
