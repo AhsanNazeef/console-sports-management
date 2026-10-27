@@ -1,0 +1,139 @@
+<div class="payment-list">
+  <section class="payment-list__stats" aria-label="Payment totals">
+    @for (card of summaryCards(); track card.label) {
+      <app-stat-card [label]="card.label" [value]="card.value" [detail]="card.detail" [loading]="summary.loading()" />
+    }
+  </section>
+  @if (summary.errorStatus() !== null) {
+    <div class="payment-list__error" role="alert">
+      <span>Couldn't load the totals. Please try again.</span>
+      <app-button variant="outline" size="small" (clicked)="summary.reload()">Try again</app-button>
+    </div>
+  } @else if (currencyWithoutTotals(); as currency) {
+    <p class="payment-list__note">There are no totals for {{ currency }}.</p>
+  }
+
+  <div class="payment-list__filters">
+    <div class="payment-list__filter">
+      <label class="payment-list__label" for="payment-status-filter">Status</label>
+      <select
+        id="payment-status-filter"
+        class="payment-list__select"
+        name="status"
+        [ngModel]="list.query().status"
+        (ngModelChange)="filterByStatus($event)"
+      >
+        <option value="">All statuses</option>
+        @for (option of statuses; track option.status) {
+          <option [value]="option.status">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+    <div class="payment-list__filter">
+      <label class="payment-list__label" for="payment-currency-filter">Currency</label>
+      <select
+        id="payment-currency-filter"
+        class="payment-list__select"
+        name="currency"
+        [ngModel]="list.query().currency"
+        (ngModelChange)="filterByCurrency($event)"
+      >
+        <option value="">All currencies</option>
+        @if (currencyHint(); as hint) {
+          <option value="" disabled>{{ hint }}</option>
+        }
+        @for (code of currencies(); track code) {
+          <option [value]="code">{{ code }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (list.failed()) {
+    <div class="payment-list__error" role="alert">
+      <span>Couldn't load the transactions. Please try again.</span>
+      <app-button variant="outline" size="small" (clicked)="list.reload()">Try again</app-button>
+    </div>
+  } @else {
+    <app-data-table
+      label="Transactions"
+      [columns]="columns()"
+      [rows]="list.rows()"
+      [loading]="list.loading()"
+      [skeletonRowCount]="pageSize"
+      [sortKey]="list.query().sortBy"
+      [sortOrder]="list.query().sortOrder"
+      minWidth="900px"
+      [emptyMessage]="emptyMessage()"
+      (sortChange)="sortBy($event)"
+    >
+      <ng-template let-row let-key="key">
+        @switch (key) {
+          @case ('reference') {
+            <button
+              type="button"
+              class="payment-list__open"
+              [attr.aria-label]="'Open ' + row.reference"
+              (click)="open(row)"
+            >
+              {{ row.reference }}
+            </button>
+          }
+          @case ('customer') {
+            <span class="payment-list__ellipsis" [title]="row.customer ?? ''">{{ row.customer || '—' }}</span>
+          }
+          @case ('description') {
+            <span class="payment-list__ellipsis" [title]="row.description ?? ''">{{ row.description || '—' }}</span>
+          }
+          @case ('method') {
+            {{ methodLabel(row.method) }}
+          }
+          @case ('amount') {
+            {{ row.amountFormatted }}
+          }
+          @case ('status') {
+            <app-status-tag [tone]="statusTone(row.status)">{{ statusLabel(row.status) }}</app-status-tag>
+          }
+          @case ('createdAt') {
+            {{ formatDateTime(row.createdAt) ?? '—' }}
+          }
+        }
+      </ng-template>
+    </app-data-table>
+
+    @if (list.total() > 0) {
+      <app-pagination
+        [page]="list.query().page"
+        [pageSize]="pageSize"
+        [total]="list.total()"
+        (pageChange)="list.goToPage($event)"
+      />
+    }
+  }
+</div>
+
+<app-transaction-detail-dialog
+  [transaction]="selected()"
+  [canChangeStatus]="canChangeStatus() && !changeBlocked()"
+  [refreshing]="refreshing()"
+  [error]="detailError()"
+  (statusChange)="askToChange($event)"
+  (closed)="close()"
+/>
+
+<app-dialog
+  icon="ic_payment_request"
+  primaryLabel="Change Status"
+  secondaryLabel="Go back"
+  [open]="!!confirming()"
+  [heading]="confirmHeading()"
+  [description]="confirmDescription"
+  [primaryDisabled]="isSaving()"
+  (primary)="changeStatus()"
+  (secondary)="cancelChange()"
+  (closed)="cancelChange()"
+>
+  @if (actionError(); as message) {
+    <p class="payment-list__dialog-error" role="alert">{{ message }}</p>
+  }
+</app-dialog>

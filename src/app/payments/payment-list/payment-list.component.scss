@@ -1,0 +1,84 @@
+@use '../../common/styles/breakpoints' as bp;
+@use '../../common/styles/form';
+@use '../../common/styles/page';
+@use '../../common/styles/typography' as type;
+
+.payment-list {
+  @include page.page;
+
+  &__stats {
+    @include page.stats(5);
+
+    @include bp.below-desktop {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    @include bp.phone {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  &__note {
+    @include type.label-large;
+    margin: 0;
+    color: var(--color-white-54);
+  }
+
+  &__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  &__filter {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 200px;
+
+    @include bp.phone {
+      flex: 1;
+      width: auto;
+      min-width: 140px;
+    }
+  }
+
+  &__label {
+    @include form.label;
+  }
+
+  &__select {
+    @include form.select;
+    min-height: 40px;
+    padding-block: 8px;
+  }
+
+  &__error {
+    @include page.error-banner;
+  }
+
+  &__open {
+    @include page.row-link;
+    display: block;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  &__ellipsis {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__dialog-error {
+    @include type.label-large;
+    margin: 0;
+    color: var(--color-red);
+    text-align: center;
+  }
+}

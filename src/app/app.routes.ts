@@ -30,7 +30,11 @@ export const routes: Routes = [
       { path: 'posts', title: 'Posts', loadComponent: comingSoon },
       { path: 'templates', title: 'Templates', loadComponent: comingSoon },
       { path: 'magazines', title: 'Magazines', loadComponent: comingSoon },
-      { path: 'payments', title: 'Payments', loadComponent: comingSoon },
+      {
+        path: 'payments',
+        title: 'Payments',
+        loadComponent: () => import('./payments/payment-list/payment-list.component').then((m) => m.PaymentListPage),
+      },
       { path: 'users', title: 'Users', loadComponent: comingSoon },
       { path: 'configuration', title: 'System Configuration', loadComponent: comingSoon },
       { path: 'requests', title: 'Requests', loadComponent: comingSoon },
