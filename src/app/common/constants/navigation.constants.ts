@@ -24,10 +24,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   {
     id: 'finance',
     label: 'Finance',
-    items: [
-      { label: 'Transactions', path: '/transactions', icon: 'ic_payment_request' },
-      { label: 'Summary', path: '/finance-summary', icon: 'ic_statistics' },
-    ],
+    items: [{ label: 'Payments', path: '/payments', icon: 'ic_payment_request' }],
   },
   {
     id: 'system',
