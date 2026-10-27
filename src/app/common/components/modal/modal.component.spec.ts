@@ -46,6 +46,18 @@ describe('ModalComponent', () => {
     expect(document.activeElement).toBe(query('.modal__close'));
   });
 
+  it('keeps Tab inside the popup', async () => {
+    fixture.componentInstance.open = true;
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const close = query('.modal__close') as HTMLButtonElement;
+    const tab = new KeyboardEvent('keydown', { key: 'Tab', cancelable: true });
+    document.dispatchEvent(tab);
+    expect(tab.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(close);
+  });
+
   it('asks to close from the × button, the backdrop and Escape', () => {
     fixture.componentInstance.open = true;
     fixture.changeDetectorRef.markForCheck();

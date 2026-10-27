@@ -1,9 +1,10 @@
 @use '../../styles/typography' as type;
 
+// Above popups (app-modal, 100/101), so a confirmation opened over one covers and dims it.
 .dialog-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 110;
   padding: 0;
   border: 0;
   background-color: var(--color-backdrop);
@@ -14,7 +15,7 @@
   position: fixed;
   top: 50%;
   left: 50%;
-  z-index: 101;
+  z-index: 111;
   display: flex;
   flex-direction: column;
   align-items: center;
