@@ -1,6 +1,10 @@
-<p class="stat-card__value">
-  @if (value() !== null) {
-    {{ value() | number }}
+<p class="stat-card__value" [class.stat-card__value--lines]="lines() !== null">
+  @if (numberValue() !== null) {
+    {{ numberValue() | number }}
+  } @else if (lines(); as list) {
+    @for (line of list; track $index) {
+      <span class="stat-card__line">{{ line }}</span>
+    }
   } @else if (loading()) {
     <app-skeleton [width]="compact() ? '32px' : '48px'" [height]="compact() ? '14px' : '24px'" />
   } @else {
@@ -8,3 +12,6 @@
   }
 </p>
 <p class="stat-card__label">{{ label() }}</p>
+@if (detail(); as text) {
+  <p class="stat-card__detail">{{ text }}</p>
+}

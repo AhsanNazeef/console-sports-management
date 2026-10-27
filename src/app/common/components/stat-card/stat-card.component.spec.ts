@@ -22,6 +22,22 @@ describe('StatCardComponent', () => {
     expect(element.querySelector('.stat-card__label')?.textContent).toBe('Sports');
   });
 
+  it('shows the totals the backend formatted as they are, one per line, with an optional second line', () => {
+    fixture.componentRef.setInput('value', ['$15,217.52', '€60.18', '£60.47']);
+    fixture.componentRef.setInput('detail', '163 payments');
+    fixture.detectChanges();
+    expect(element.querySelector('.stat-card__detail')?.textContent).toBe('163 payments');
+    expect(Array.from(element.querySelectorAll('.stat-card__line')).map((line) => line.textContent)).toEqual([
+      '$15,217.52',
+      '€60.18',
+      '£60.47',
+    ]);
+
+    fixture.componentRef.setInput('value', []);
+    fixture.detectChanges();
+    expect(value()).toBe('—');
+  });
+
   it('can be the smaller card used beside a header', () => {
     expect(element.classList).not.toContain('stat-card--compact');
     fixture.componentRef.setInput('compact', true);
