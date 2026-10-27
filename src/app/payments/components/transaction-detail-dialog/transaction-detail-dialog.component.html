@@ -1,0 +1,54 @@
+<app-modal [open]="!!transaction()" [heading]="heading()" (closed)="closed.emit()">
+  @if (transaction(); as current) {
+    <div class="transaction-detail">
+      <div class="transaction-detail__status">
+        <span class="transaction-detail__label">Status</span>
+        <app-status-tag [tone]="statusTone()">{{ statusLabel() }}</app-status-tag>
+      </div>
+
+      <dl class="transaction-detail__fields">
+        @for (field of fields(); track field.label) {
+          <div class="transaction-detail__field">
+            <dt class="transaction-detail__label">{{ field.label }}</dt>
+            <dd class="transaction-detail__value">{{ field.value }}</dd>
+          </div>
+        }
+      </dl>
+
+      @if (canChangeStatus()) {
+        @if (refreshing()) {
+          <p class="transaction-detail__note" role="status">Updating…</p>
+        } @else if (nextStatuses().length) {
+          <form class="transaction-detail__change" novalidate (ngSubmit)="requestChange()">
+            <label class="transaction-detail__label" for="transaction-new-status">Change status to</label>
+            <div class="transaction-detail__change-row">
+              <select
+                id="transaction-new-status"
+                class="transaction-detail__select"
+                name="newStatus"
+                [ngModel]="newStatus()"
+                (ngModelChange)="newStatus.set($event)"
+              >
+                <option value="" disabled>Choose a status</option>
+                @for (option of nextStatuses(); track option.status) {
+                  <option [value]="option.status">{{ option.label }}</option>
+                }
+              </select>
+              <app-button type="submit" size="small" [disabled]="!newStatus()">Change Status</app-button>
+            </div>
+          </form>
+        } @else {
+          <p class="transaction-detail__note">{{ finalNote() }}</p>
+        }
+      }
+
+      @if (error(); as message) {
+        <p class="transaction-detail__error" role="alert">{{ message }}</p>
+      }
+
+      <div class="transaction-detail__actions">
+        <app-button variant="outline" [fullWidth]="true" (clicked)="closed.emit()">Close</app-button>
+      </div>
+    </div>
+  }
+</app-modal>
