@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Breadcrumb, BreadcrumbsComponent } from '../../common/components/breadcrumbs/breadcrumbs.component';
+import { ButtonComponent } from '../../common/components/button/button.component';
 import { DetailField, DetailHeaderComponent } from '../../common/components/detail-header/detail-header.component';
 import { formatDateTime } from '../../common/utils/datetime.util';
-import { createReloadable } from '../../common/utils/reloadable.util';
+import { createReloadable, firstLoadError } from '../../common/utils/reloadable.util';
 import { HierarchyApiService } from '../services/hierarchy-api.service';
 import { SportsApiService } from '../services/sports-api.service';
 import { isMissing } from '../utils/hierarchy-errors.util';
@@ -13,7 +14,7 @@ import { governingBodyLink, organisationLink, sportLink } from '../utils/hierarc
 @Component({
   selector: 'app-participant-detail-page',
   standalone: true,
-  imports: [BreadcrumbsComponent, DetailHeaderComponent, RouterLink],
+  imports: [BreadcrumbsComponent, ButtonComponent, DetailHeaderComponent, RouterLink],
   templateUrl: './participant-detail.component.html',
   styleUrl: './participant-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,8 +31,8 @@ export class ParticipantDetailPage {
 
   readonly participant = createReloadable((id) => this.hierarchyApi.getParticipant$(id), this.participantId);
   // For the breadcrumbs: the organisation brings its governing body's name.
-  readonly organisation = createReloadable((id) => this.hierarchyApi.getOrganisation$(id), this.organisationId);
-  readonly sport = createReloadable((id) => this.sportsApi.getSport$(id), this.sportId);
+  readonly organisation = createReloadable((id) => this.hierarchyApi.getOrganisation$(id, false), this.organisationId);
+  readonly sport = createReloadable((id) => this.sportsApi.getSport$(id, false), this.sportId);
 
   readonly fullName = computed(() => {
     const participant = this.participant.value();
@@ -44,6 +45,9 @@ export class ParticipantDetailPage {
       ? !!participant.team && participant.team.organizationId !== this.organisationId()
       : isMissing(this.participant.errorStatus());
   });
+  readonly loadError = computed(() =>
+    firstLoadError(this.participant, "Couldn't load this participant. Please try again.")
+  );
   readonly organisationLink = computed(() =>
     organisationLink(this.sportId(), this.governingBodyId(), this.organisationId())
   );

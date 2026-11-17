@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FORBIDDEN_LOAD_MESSAGE } from '../../../common/constants/http.constants';
 import { AWAY, HOME, matchEvent } from '../../testing/match.fixtures';
 import { MatchTimelineComponent } from './match-timeline.component';
 
@@ -46,13 +47,17 @@ describe('MatchTimelineComponent', () => {
     expect(rows()[0].slice(2, 4)).toEqual(['Buzzer United', 'Ana Silva']);
   });
 
-  it('says when there are no events, or when they could not be loaded', () => {
+  it('says when there are no events, or why they could not be loaded', () => {
     fixture.componentRef.setInput('events', []);
     fixture.detectChanges();
     expect(element.querySelector('.data-table__empty')?.textContent).toBe('No events yet.');
 
-    fixture.componentRef.setInput('failed', true);
+    fixture.componentRef.setInput('error', FORBIDDEN_LOAD_MESSAGE);
     fixture.detectChanges();
-    expect(element.querySelector('.data-table__empty')?.textContent).toBe('The timeline could not be loaded.');
+    expect(element.querySelector('.data-table__empty')?.textContent).toBe(FORBIDDEN_LOAD_MESSAGE);
+
+    fixture.componentRef.setInput('error', null);
+    fixture.detectChanges();
+    expect(element.querySelector('.data-table__empty')?.textContent).toBe('No events yet.');
   });
 });

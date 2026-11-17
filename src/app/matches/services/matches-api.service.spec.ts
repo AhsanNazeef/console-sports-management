@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SKIP_HTTP_NOTICE } from '../../common/constants/http.constants';
 import { DEFAULT_MATCH_QUERY } from '../constants/matches.constants';
 import { MatchesApiService } from './matches-api.service';
 
@@ -33,6 +34,7 @@ describe('MatchesApiService', () => {
     expect(request.request.params.get('limit')).toBe('10');
     expect(request.request.params.get('sortBy')).toBe('scheduledAt');
     expect(request.request.params.get('sortOrder')).toBe('desc');
+    expect(request.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
     request.flush(EMPTY_PAGE);
   });
 
@@ -50,6 +52,7 @@ describe('MatchesApiService', () => {
     const post = http.expectOne(MATCHES);
     expect(post.request.method).toBe('POST');
     expect(post.request.body).toEqual(body);
+    expect(post.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
     post.flush({ success: true, data: { id: 'm1' } });
     expect((await created).id).toBe('m1');
 
@@ -57,11 +60,13 @@ describe('MatchesApiService', () => {
     const patch = http.expectOne(`${MATCHES}/m1`);
     expect(patch.request.method).toBe('PATCH');
     expect(patch.request.body).toEqual({ scheduledAt: '2026-11-02T14:00:00.000Z', venue: '' });
+    expect(patch.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
     patch.flush({ success: true, data: { id: 'm1' } });
 
     api.deleteMatch$('m1').subscribe();
     const del = http.expectOne(`${MATCHES}/m1`);
     expect(del.request.method).toBe('DELETE');
+    expect(del.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
     del.flush({ success: true, data: { id: 'm1', deleted: true } });
   });
 
@@ -71,6 +76,7 @@ describe('MatchesApiService', () => {
     expect(sportsRequest.request.params.get('limit')).toBe('100');
     expect(sportsRequest.request.params.get('sortBy')).toBe('name');
     expect(sportsRequest.request.params.get('sortOrder')).toBe('asc');
+    expect(sportsRequest.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
     sportsRequest.flush({ ...EMPTY_PAGE, data: [{ id: 's1', name: 'Hockey', iconUrl: null }] });
     expect(await sports).toEqual([{ id: 's1', name: 'Hockey', iconUrl: null }]);
 
@@ -78,27 +84,39 @@ describe('MatchesApiService', () => {
     const teamsRequest = http.expectOne((req) => req.url === `${ORGANIZATIONS}/teams`);
     expect(teamsRequest.request.params.get('sportId')).toBe('s1');
     expect(teamsRequest.request.params.get('sortBy')).toBe('name');
+    expect(teamsRequest.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
     teamsRequest.flush({ ...EMPTY_PAGE, data: [{ id: 't1', name: 'Away FC' }] });
     expect((await teams).map((team) => team.name)).toEqual(['Away FC']);
   });
 
   it('reads a match with its scoreboard, timeline and stats, and changes its status', async () => {
     api.getMatch$('m1').subscribe();
-    http.expectOne(`${MATCHES}/m1`).flush({ success: true, data: { id: 'm1' } });
+    const match = http.expectOne(`${MATCHES}/m1`);
+    expect(match.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
+    match.flush({ success: true, data: { id: 'm1' } });
 
     const timeline = firstValueFrom(api.getTimeline$('m1'));
-    http.expectOne(`${MATCHES}/m1/timeline`).flush({ success: true, data: [{ id: 'e1', minute: 12 }] });
+    const timelineRequest = http.expectOne(`${MATCHES}/m1/timeline`);
+    expect(timelineRequest.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
+    timelineRequest.flush({ success: true, data: [{ id: 'e1', minute: 12 }] });
     expect((await timeline).map((event) => event.minute)).toEqual([12]);
 
     api.getStats$('m1').subscribe();
-    http.expectOne(`${MATCHES}/m1/stats`).flush({ success: true, data: { totalEvents: 0 } });
+    const stats = http.expectOne(`${MATCHES}/m1/stats`);
+    expect(stats.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
+    stats.flush({ success: true, data: { totalEvents: 0 } });
+
+    // The scoreboard has no message of its own, so its 403 or 429 is left to the console-wide notice.
     api.getScoreboard$('m1').subscribe();
-    http.expectOne(`${MATCHES}/m1/scoreboard`).flush({ success: true, data: { status: 'LIVE' } });
+    const scoreboard = http.expectOne(`${MATCHES}/m1/scoreboard`);
+    expect(scoreboard.request.context.get(SKIP_HTTP_NOTICE)).toBe(false);
+    scoreboard.flush({ success: true, data: { status: 'LIVE' } });
 
     api.changeStatus$('m1', 'LIVE').subscribe();
     const patch = http.expectOne(`${MATCHES}/m1/status`);
     expect(patch.request.method).toBe('PATCH');
     expect(patch.request.body).toEqual({ status: 'LIVE' });
+    expect(patch.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
     patch.flush({ success: true, data: { id: 'm1', status: 'LIVE' } });
   });
 
@@ -107,12 +125,15 @@ describe('MatchesApiService', () => {
     const post = http.expectOne(`${MATCHES}/m1/events`);
     expect(post.request.method).toBe('POST');
     expect(post.request.body).toEqual({ type: 'GOAL', minute: 12, teamId: 't1' });
+    expect(post.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
     post.flush({ success: true, data: { id: 'e1' } });
 
     api.getPlayers$('t1').subscribe();
     const players = http.expectOne((req) => req.url === `${ORGANIZATIONS}/players`);
     expect(players.request.params.get('teamId')).toBe('t1');
     expect(players.request.params.get('sortBy')).toBe('lastName');
+    // The players have no message of their own, so their 403 or 429 is left to the console-wide notice.
+    expect(players.request.context.get(SKIP_HTTP_NOTICE)).toBe(false);
     players.flush(EMPTY_PAGE);
   });
 });

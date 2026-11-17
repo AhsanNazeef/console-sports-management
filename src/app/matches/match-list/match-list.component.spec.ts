@@ -1,8 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
+import { authServiceAs } from '../../../testing/auth.fixtures';
+import { UserRole } from '../../auth/models/auth.model';
+import { FORBIDDEN_LOAD_MESSAGE, RATE_LIMITED_MESSAGE } from '../../common/constants/http.constants';
 import { ApiListResponse } from '../../common/models/api.model';
 import { AuthService } from '../../core/auth/services/auth.service';
 import { DEFAULT_MATCH_QUERY } from '../constants/matches.constants';
@@ -51,7 +53,7 @@ describe('MatchListPage', () => {
     getTeams$: ReturnType<typeof vi.fn>;
   };
 
-  async function setUp(canEdit = true, savedQuery?: MatchQuery): Promise<void> {
+  async function setUp(role: UserRole = 'ADMIN', savedQuery?: MatchQuery): Promise<void> {
     api = {
       getMatches$: vi.fn(() => of(page([match('a', 'LIVE'), match('b', 'SCHEDULED', null)], 12))),
       createMatch$: vi.fn(() => of(match('c', 'SCHEDULED'))),
@@ -65,13 +67,7 @@ describe('MatchListPage', () => {
       providers: [
         provideRouter([]),
         { provide: MatchesApiService, useValue: api },
-        {
-          provide: AuthService,
-          useValue: {
-            hasAnyRole: () => canEdit,
-            currentUser: signal({ id: 'u1', email: 'admin@buzzer.dev', role: 'ADMIN' }),
-          },
-        },
+        { provide: AuthService, useValue: authServiceAs(role) },
       ],
     });
     if (savedQuery) {
@@ -145,7 +141,7 @@ describe('MatchListPage', () => {
   });
 
   it('comes back on the tab and page it was left on', async () => {
-    await setUp(true, { ...DEFAULT_MATCH_QUERY, status: 'LIVE', page: 2 });
+    await setUp('ADMIN', { ...DEFAULT_MATCH_QUERY, status: 'LIVE', page: 2 });
     expect(lastQuery()).toMatchObject({ status: 'LIVE', page: 2 });
 
     buttonWithText('Cancelled').click();
@@ -153,15 +149,64 @@ describe('MatchListPage', () => {
     expect(TestBed.inject(MatchListStateService).query()).toMatchObject({ status: 'CANCELLED', page: 1 });
   });
 
-  it('hides Schedule Match and the row actions from roles that cannot change matches', async () => {
-    await setUp(false);
-    expect(buttonWithText('Schedule Match')).toBeUndefined();
-    expect(element.querySelector('button[aria-label^="Edit"]')).toBeNull();
-    expect(Array.from(element.querySelectorAll('th')).map((th) => th.textContent?.trim())).not.toContain('Actions');
+  for (const [role, allowed] of [
+    ['ADMIN', true],
+    ['OPERATOR', true],
+    ['VIEWER', false],
+    ['ORG', false],
+  ] as const) {
+    it(`${allowed ? 'offers' : 'offers no'} Schedule Match and the row Edit and Delete to ${role}`, async () => {
+      await setUp(role);
+      expect(!!buttonWithText('Schedule Match')).toBe(allowed);
+      expect(!!element.querySelector('button[aria-label="Edit Fan City vs Buzzer United"]')).toBe(allowed);
+      expect(!!element.querySelector('button[aria-label="Delete Fan City vs Buzzer United"]')).toBe(allowed);
+      expect(
+        Array.from(element.querySelectorAll('th'))
+          .map((th) => th.textContent?.trim())
+          .includes('Actions')
+      ).toBe(allowed);
+      expect(element.querySelectorAll('tbody tr').length).toBe(2);
+    });
+  }
+
+  it('says why the matches could not be loaded, and loads them again on Try again', async () => {
+    await setUp();
+    api.getMatches$.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 429 })));
+    buttonWithText('Finished').click();
+    await settle();
+    const row = element.querySelector('.match-list__error') as HTMLElement;
+    expect(row.querySelector('span')?.textContent).toBe(RATE_LIMITED_MESSAGE);
+
+    buttonWithText('Try again').click();
+    await settle();
+    expect(lastQuery()).toMatchObject({ status: 'FINISHED' });
+    expect(element.querySelector('.match-list__error')).toBeNull();
+    expect(rowCells(0)[1]).toBe('Fan City vs Buzzer United');
+  });
+
+  it('says why the sports for a new match could not be loaded', async () => {
+    await setUp();
+    api.getSportOptions$.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 429 })));
+    buttonWithText('Schedule Match').click();
+    await settle();
+    expect(element.querySelector('.match-form__error')?.textContent).toBe(RATE_LIMITED_MESSAGE);
+  });
+
+  it("says why a sport's teams could not be loaded", async () => {
+    await setUp();
+    api.getTeams$.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 403 })));
+    buttonWithText('Schedule Match').click();
+    await settle();
+    const sport = element.querySelector('#match-sport') as HTMLSelectElement;
+    sport.value = 's1';
+    sport.dispatchEvent(new Event('change'));
+    await settle();
+    expect(api.getTeams$).toHaveBeenCalledWith('s1');
+    expect(element.querySelector('.match-form__error')?.textContent).toBe(FORBIDDEN_LOAD_MESSAGE);
   });
 
   it('schedules a match and shows it on page 1 of the Scheduled tab', async () => {
-    await setUp(true, { ...DEFAULT_MATCH_QUERY, status: 'LIVE', page: 2 });
+    await setUp('ADMIN', { ...DEFAULT_MATCH_QUERY, status: 'LIVE', page: 2 });
     buttonWithText('Schedule Match').click();
     await settle();
     expect(api.getSportOptions$).toHaveBeenCalledTimes(1);

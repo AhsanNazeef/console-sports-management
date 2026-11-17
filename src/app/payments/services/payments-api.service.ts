@@ -1,10 +1,14 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SKIP_HTTP_NOTICE } from '../../common/constants/http.constants';
 import { ApiListResponse, ApiResponse } from '../../common/models/api.model';
 import { PaymentStatus, PaymentSummary, Transaction, TransactionQuery } from '../models/payment.model';
 import { searchTermForBackend } from '../utils/payment.util';
+
+// The Payments page and its popups show every error of these requests themselves.
+const INLINE_ERRORS = new HttpContext().set(SKIP_HTTP_NOTICE, true);
 
 @Injectable({ providedIn: 'root' })
 export class PaymentsApiService {
@@ -13,7 +17,9 @@ export class PaymentsApiService {
 
   // Counts and formatted totals per status, plus gross revenue, overall and per currency (byCurrency).
   getSummary$(): Observable<PaymentSummary> {
-    return this.http.get<ApiResponse<PaymentSummary>>(`${this.baseUrl}/summary`).pipe(map((response) => response.data));
+    return this.http
+      .get<ApiResponse<PaymentSummary>>(`${this.baseUrl}/summary`, { context: INLINE_ERRORS })
+      .pipe(map((response) => response.data));
   }
 
   // The backend matches ?search= against the reference, the customer's email, the description and the method's code;
@@ -33,18 +39,23 @@ export class PaymentsApiService {
     if (query.search) {
       params = params.set('search', searchTermForBackend(query.search));
     }
-    return this.http.get<ApiListResponse<Transaction>>(`${this.baseUrl}/transactions`, { params });
+    return this.http.get<ApiListResponse<Transaction>>(`${this.baseUrl}/transactions`, {
+      params,
+      context: INLINE_ERRORS,
+    });
   }
 
   getTransaction$(id: string): Observable<Transaction> {
     return this.http
-      .get<ApiResponse<Transaction>>(`${this.baseUrl}/transactions/${id}`)
+      .get<ApiResponse<Transaction>>(`${this.baseUrl}/transactions/${id}`, { context: INLINE_ERRORS })
       .pipe(map((response) => response.data));
   }
 
   // ADMIN and OPERATOR only. The API documents no response body for it, so the page reads the transaction again
   // from its detail endpoint afterwards.
   changeStatus$(id: string, status: PaymentStatus): Observable<void> {
-    return this.http.patch(`${this.baseUrl}/transactions/${id}/status`, { status }).pipe(map(() => undefined));
+    return this.http
+      .patch(`${this.baseUrl}/transactions/${id}/status`, { status }, { context: INLINE_ERRORS })
+      .pipe(map(() => undefined));
   }
 }

@@ -5,9 +5,9 @@
     </div>
   }
 
-  @if (failed()) {
+  @if (loadError() ?? refreshFailure(); as message) {
     <div class="squad-panel__error" role="alert">
-      <span>Couldn't load the squad. Please try again.</span>
+      <span>{{ message }}</span>
       <app-button variant="outline" size="small" (clicked)="squad.reload()">Try again</app-button>
     </div>
   }

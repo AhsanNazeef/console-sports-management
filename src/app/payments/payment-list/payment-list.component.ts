@@ -21,14 +21,13 @@ import { StatCardComponent } from '../../common/components/stat-card/stat-card.c
 import { StatusTagComponent } from '../../common/components/status-tag/status-tag.component';
 import { SearchService } from '../../common/services/search.service';
 import { formatDateTime } from '../../common/utils/datetime.util';
-import { describeHttpError } from '../../common/utils/http-error.util';
+import { describeHttpError, describeLoadError, httpStatusOf } from '../../common/utils/http-error.util';
 import { createPagedList } from '../../common/utils/paged-list.util';
 import { createReloadable } from '../../common/utils/reloadable.util';
 import { AuthService } from '../../core/auth/services/auth.service';
 import { TransactionDetailDialogComponent } from '../components/transaction-detail-dialog/transaction-detail-dialog.component';
 import {
   DEFAULT_TRANSACTION_QUERY,
-  PAYMENT_STATUS_EDITOR_ROLES,
   PAYMENT_STATUS_LABELS,
   PAYMENT_STATUSES,
   PAYMENTS_PAGE_SIZE,
@@ -81,13 +80,19 @@ export class PaymentListPage {
 
   readonly pageSize = PAYMENTS_PAGE_SIZE;
   readonly statuses = PAYMENT_STATUSES.map((status) => ({ status, label: PAYMENT_STATUS_LABELS[status] }));
-  readonly canChangeStatus = computed(() => this.authService.hasAnyRole(PAYMENT_STATUS_EDITOR_ROLES));
+  readonly canChangeStatus = computed(() => this.authService.can('changePaymentStatus'));
 
   readonly list = createPagedList<Transaction, TransactionQuery>({
     initialQuery: this.initialQuery,
     load: (query) => this.paymentsApi.getTransactions$(query),
   });
   readonly summary = createReloadable(() => this.paymentsApi.getSummary$());
+  readonly summaryError = computed(() =>
+    describeLoadError(this.summary.errorStatus(), "Couldn't load the totals. Please try again.")
+  );
+  readonly listError = computed(() =>
+    describeLoadError(this.list.errorStatus(), "Couldn't load the transactions. Please try again.")
+  );
 
   // After a failed load the cards show dashes, not totals that may be out of date.
   private readonly summaryValue = computed(() => (this.summary.errorStatus() === null ? this.summary.value() : null));
@@ -315,9 +320,16 @@ export class PaymentListPage {
     } else if (afterChange) {
       // The change went through, but this copy is from before it.
       this.changeBlocked.set(true);
-      this.detailError.set("The status was changed, but the new copy couldn't be loaded. Close and reopen it.");
+      this.detailError.set(
+        `The status was changed, but the new copy couldn't be loaded. ${describeLoadError(httpStatusOf(load.error), 'Close and reopen it.')}`
+      );
     } else {
-      this.detailError.set("Couldn't load the latest copy of this transaction. Close it and open it again to retry.");
+      this.detailError.set(
+        describeLoadError(
+          httpStatusOf(load.error),
+          "Couldn't load the latest copy of this transaction. Close it and open it again to retry."
+        )
+      );
     }
   }
 

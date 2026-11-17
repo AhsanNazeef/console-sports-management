@@ -14,7 +14,7 @@
       <p class="user-picker__hint">Searching…</p>
     }
     @case ('failed') {
-      <p class="user-picker__hint user-picker__hint--error">Couldn't search users. Try again.</p>
+      <p class="user-picker__hint user-picker__hint--error">{{ current.message }}</p>
     }
     @case ('done') {
       @if (current.users.length > 0) {

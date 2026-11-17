@@ -6,7 +6,7 @@
   </section>
   @if (summary.errorStatus() !== null) {
     <div class="payment-list__error" role="alert">
-      <span>Couldn't load the totals. Please try again.</span>
+      <span>{{ summaryError() }}</span>
       <app-button variant="outline" size="small" (clicked)="summary.reload()">Try again</app-button>
     </div>
   } @else if (currencyWithoutTotals(); as currency) {
@@ -51,7 +51,7 @@
 
   @if (list.failed()) {
     <div class="payment-list__error" role="alert">
-      <span>Couldn't load the transactions. Please try again.</span>
+      <span>{{ listError() }}</span>
       <app-button variant="outline" size="small" (clicked)="list.reload()">Try again</app-button>
     </div>
   } @else {

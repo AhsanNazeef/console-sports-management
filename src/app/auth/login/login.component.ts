@@ -6,6 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, exhaustMap, finalize, of, Subject } from 'rxjs';
 import { ButtonComponent } from '../../common/components/button/button.component';
 import { TextInputComponent } from '../../common/components/text-input/text-input.component';
+import { RATE_LIMITED_MESSAGE } from '../../common/constants/http.constants';
 import { ApiErrorBody } from '../../common/models/api.model';
 import { AuthService } from '../../core/auth/services/auth.service';
 import { HOME_PATH, LOGIN_PATH } from '../constants/auth.constants';
@@ -102,6 +103,9 @@ function describeLoginError(error: unknown): string {
   }
   if (error.status === 400) {
     return (error.error as ApiErrorBody | null)?.error?.message ?? 'Check your email and password.';
+  }
+  if (error.status === 429) {
+    return RATE_LIMITED_MESSAGE;
   }
   return 'Something went wrong. Please try again.';
 }

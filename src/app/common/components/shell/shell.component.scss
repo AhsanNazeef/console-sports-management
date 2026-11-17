@@ -1,3 +1,5 @@
+@use '../../styles/page';
+
 :host {
   display: block;
 }
@@ -23,6 +25,18 @@
     min-height: 0;
     padding: 16px;
     overflow-y: auto;
+
+    // Takes focus from code only (see focusMainIfRemoved), never by Tab, so it needs no ring.
+    &:focus {
+      outline: none;
+    }
+  }
+
+  // Explains a refused or rate-limited request, or missing permissions, between the header and the page, so it
+  // stays in view while the page scrolls.
+  &__notice {
+    @include page.error-banner;
+    margin: var(--space-4) var(--space-4) 0;
   }
 
   &__backdrop {

@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
+import { RATE_LIMITED_MESSAGE } from '../../common/constants/http.constants';
 import { AuthService } from '../../core/auth/services/auth.service';
 import { LoginPage } from './login.component';
 
@@ -130,6 +131,15 @@ describe('LoginPage', () => {
     authService.login$.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
     await fillAndSubmit(page, 'admin@buzzer.dev', 'secret');
     expect(page.querySelector('[role="alert"]')?.textContent).toContain("Couldn't reach the server");
+  });
+
+  it('explains the wait when sign-in is rate-limited', async () => {
+    const page = await setUp();
+    authService.login$.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 429 })));
+    await fillAndSubmit(page, 'admin@buzzer.dev', 'secret');
+    expect(page.querySelector('[role="alert"]')?.textContent).toContain(RATE_LIMITED_MESSAGE);
+    expect((page.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(false);
+    expect(navigateByUrl).not.toHaveBeenCalled();
   });
 
   it('disables the button while logging in', async () => {

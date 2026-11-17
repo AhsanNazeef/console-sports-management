@@ -3,7 +3,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, RouterLink } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { authServiceAs } from '../../../testing/auth.fixtures';
 import { listOf, sampleGoverningBody, sampleSport } from '../../../testing/hierarchy-fixtures';
+import { UserRole } from '../../auth/models/auth.model';
+import { FORBIDDEN_LOAD_MESSAGE, RATE_LIMITED_MESSAGE } from '../../common/constants/http.constants';
 import { AuthService } from '../../core/auth/services/auth.service';
 import { HierarchyApiService } from '../services/hierarchy-api.service';
 import { SportsApiService } from '../services/sports-api.service';
@@ -19,7 +22,7 @@ describe('SportDetailPage', () => {
     createGoverningBody$: ReturnType<typeof vi.fn>;
   };
 
-  async function setUp(canEdit = true, adjust?: () => void): Promise<void> {
+  async function setUp(role: UserRole = 'ADMIN', adjust?: () => void): Promise<void> {
     sportsApi = { getSport$: vi.fn(() => of(sampleSport())) };
     hierarchyApi = {
       getSportCounts$: vi.fn(() => of({ governingBodies: 1, organisations: 3, participants: 40 })),
@@ -33,7 +36,7 @@ describe('SportDetailPage', () => {
         provideRouter([]),
         { provide: SportsApiService, useValue: sportsApi },
         { provide: HierarchyApiService, useValue: hierarchyApi },
-        { provide: AuthService, useValue: { hasAnyRole: () => canEdit } },
+        { provide: AuthService, useValue: authServiceAs(role) },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(SportDetailPage);
@@ -49,6 +52,9 @@ describe('SportDetailPage', () => {
   };
   const text = (selector: string): string[] =>
     Array.from(element.querySelectorAll(selector)).map((node) => node.textContent?.replace(/\s+/g, ' ').trim() ?? '');
+  const buttonWithText = (label: string): HTMLButtonElement | undefined =>
+    Array.from(element.querySelectorAll('button')).find((button) => button.textContent?.trim() === label);
+  const failWith = (status: number) => () => throwError(() => new HttpErrorResponse({ status }));
 
   it('shows the sport, its counts and its governing bodies, each linking one level down', async () => {
     await setUp();
@@ -98,18 +104,62 @@ describe('SportDetailPage', () => {
     expect(element.querySelector('.modal')).toBeNull();
   });
 
-  it('offers no Add button to roles that cannot change the catalogue', async () => {
-    await setUp(false);
-    expect(
-      Array.from(element.querySelectorAll('button')).some((b) => b.textContent?.includes('Add Governing Body'))
-    ).toBe(false);
-  });
+  for (const [role, allowed] of [
+    ['ADMIN', true],
+    ['OPERATOR', true],
+    ['VIEWER', false],
+    ['ORG', false],
+  ] as const) {
+    it(`${allowed ? 'offers' : 'offers no'} Add Governing Body to ${role}`, async () => {
+      await setUp(role);
+      expect(!!buttonWithText('Add Governing Body')).toBe(allowed);
+    });
+  }
 
   it('says so when the sport does not exist', async () => {
-    await setUp(true, () =>
-      sportsApi.getSport$.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })))
-    );
+    await setUp('ADMIN', () => sportsApi.getSport$.mockImplementation(failWith(404)));
     expect(element.querySelector('.detail-page__missing')?.textContent).toContain("This sport doesn't exist");
     expect(element.querySelector('.detail-page__missing a')?.getAttribute('href')).toBe('/sports');
+    expect(element.querySelector('.detail-page__error')).toBeNull();
+  });
+
+  for (const [status, message] of [
+    [429, RATE_LIMITED_MESSAGE],
+    [403, FORBIDDEN_LOAD_MESSAGE],
+    [500, "Couldn't load this sport. Please try again."],
+  ] as const) {
+    it(`shows why the sport couldn't load (${status}) in place of the header`, async () => {
+      await setUp('ADMIN', () => sportsApi.getSport$.mockImplementation(failWith(status)));
+      expect(text('.detail-page__error > span')).toEqual([message]);
+      expect(element.querySelector('app-detail-header')).toBeNull();
+      expect(element.querySelector('.detail-page__missing')).toBeNull();
+    });
+  }
+
+  it('loads the sport again from Try again and shows the header once it arrives', async () => {
+    await setUp('ADMIN', () => sportsApi.getSport$.mockImplementation(failWith(429)));
+    sportsApi.getSport$.mockReturnValue(of(sampleSport()));
+    buttonWithText('Try again')!.click();
+    await settle();
+    expect(sportsApi.getSport$).toHaveBeenCalledTimes(2);
+    expect(element.querySelector('.detail-page__error')).toBeNull();
+    expect(element.querySelector('app-detail-header h2')?.textContent).toBe('Football');
+  });
+
+  it('explains a rate-limited governing bodies list and keeps the sport on show', async () => {
+    await setUp('ADMIN', () => hierarchyApi.getGoverningBodies$.mockImplementation(failWith(429)));
+    expect(text('.detail-page__error > span')).toEqual([RATE_LIMITED_MESSAGE]);
+    expect(element.querySelector('app-detail-header h2')?.textContent).toBe('Football');
+    expect(text('tbody td')).toEqual(['Governing bodies could not be loaded.']);
+  });
+
+  it('loads the governing bodies again from the list’s Try again', async () => {
+    await setUp('ADMIN', () => hierarchyApi.getGoverningBodies$.mockImplementation(failWith(429)));
+    hierarchyApi.getGoverningBodies$.mockReturnValue(of(listOf([sampleGoverningBody()])));
+    buttonWithText('Try again')!.click();
+    await settle();
+    expect(hierarchyApi.getGoverningBodies$).toHaveBeenCalledTimes(2);
+    expect(element.querySelector('.detail-page__error')).toBeNull();
+    expect(text('tbody td')).not.toEqual(['Governing bodies could not be loaded.']);
   });
 });

@@ -7,14 +7,28 @@
       <a [routerLink]="governingBodyLink()" skipLocationChange>Back to the governing body</a>
     </div>
   } @else {
-    <app-detail-header
-      layout="stacked"
-      [title]="organisation.value()?.name ?? ''"
-      [imageUrl]="organisation.value()?.crestUrl ?? null"
-      [seed]="organisationId()"
-      [fields]="fields()"
-      [loading]="!organisation.value()"
-    />
+    @if (loadError(); as message) {
+      <div class="detail-page__error" role="alert">
+        <span>{{ message }}</span>
+        <app-button variant="outline" size="small" (clicked)="organisation.reload()">Try again</app-button>
+      </div>
+    } @else {
+      <app-detail-header
+        layout="stacked"
+        [title]="organisation.value()?.name ?? ''"
+        [imageUrl]="organisation.value()?.crestUrl ?? null"
+        [seed]="organisationId()"
+        [fields]="fields()"
+        [loading]="!organisation.value()"
+      />
+    }
+
+    @if (organisationRefreshError(); as message) {
+      <div class="detail-page__error" role="alert">
+        <span>{{ message }}</span>
+        <app-button variant="outline" size="small" (clicked)="organisation.reload()">Try again</app-button>
+      </div>
+    }
 
     <app-tabs
       class="detail-page__tabs"
@@ -42,7 +56,7 @@
 
           @if (participants.failed()) {
             <div class="detail-page__error" role="alert">
-              <span>Couldn't load the participants. Please try again.</span>
+              <span>{{ participantsError() }}</span>
               <app-button variant="outline" size="small" (clicked)="participants.reload()">Try again</app-button>
             </div>
           }

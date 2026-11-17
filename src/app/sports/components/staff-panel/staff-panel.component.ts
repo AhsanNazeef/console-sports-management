@@ -7,7 +7,7 @@ import { DialogComponent } from '../../../common/components/dialog/dialog.compon
 import { EntityAvatarComponent } from '../../../common/components/entity-avatar/entity-avatar.component';
 import { SkeletonComponent } from '../../../common/components/skeleton/skeleton.component';
 import { describeHttpError } from '../../../common/utils/http-error.util';
-import { createReloadable } from '../../../common/utils/reloadable.util';
+import { createReloadable, firstLoadError, refreshError } from '../../../common/utils/reloadable.util';
 import { STAFF_CATEGORIES, STAFF_CATEGORY_LABELS } from '../../constants/members.constants';
 import { StaffCategory, StaffMember, StaffMemberInput } from '../../models/member.model';
 import { MembersApiService } from '../../services/members-api.service';
@@ -31,7 +31,11 @@ export class StaffPanelComponent {
   readonly canEdit = input(false);
 
   readonly staff = createReloadable((id) => this.membersApi.getStaffGroups$(id), this.organisationId);
-  readonly failed = computed(() => this.staff.errorStatus() !== null && !this.staff.value());
+  readonly loadError = computed(() => firstLoadError(this.staff, "Couldn't load the staff. Please try again."));
+  // A failed refresh after a save or removal: the cards may be out of date.
+  readonly refreshFailure = computed(() =>
+    refreshError(this.staff, "Couldn't refresh the staff, so the list may be out of date. Please try again.")
+  );
   readonly labels = STAFF_CATEGORY_LABELS;
   // Sections drawn with placeholder cards until the first response arrives.
   readonly placeholderSections = STAFF_CATEGORIES;

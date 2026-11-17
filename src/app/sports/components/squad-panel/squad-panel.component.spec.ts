@@ -1,5 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { RATE_LIMITED_MESSAGE } from '../../../common/constants/http.constants';
 import { SquadMember } from '../../models/member.model';
 import { MembersApiService } from '../../services/members-api.service';
 import { SquadPanelComponent } from './squad-panel.component';
@@ -29,7 +31,8 @@ describe('SquadPanelComponent', () => {
     removeSquadMember$: ReturnType<typeof vi.fn>;
   };
 
-  async function setUp(canEdit = true): Promise<void> {
+  // `adjust` can swap fake responses before the panel is created.
+  async function setUp(canEdit = true, adjust?: () => void): Promise<void> {
     api = {
       getSquad$: vi.fn(() =>
         of([member(), member({ id: 'm2', displayName: 'Ana', photoUrl: null, age: null, agreementEnd: null })])
@@ -38,6 +41,7 @@ describe('SquadPanelComponent', () => {
       updateSquadMember$: vi.fn(() => of(member())),
       removeSquadMember$: vi.fn(() => of(undefined)),
     };
+    adjust?.();
     await TestBed.configureTestingModule({
       imports: [SquadPanelComponent],
       providers: [{ provide: MembersApiService, useValue: api }],
@@ -54,6 +58,9 @@ describe('SquadPanelComponent', () => {
     await new Promise((resolve) => setTimeout(resolve));
     await fixture.whenStable();
   };
+  const failWith = (status: number) => () => throwError(() => new HttpErrorResponse({ status }));
+  const buttonWithText = (label: string): HTMLButtonElement | undefined =>
+    Array.from(element.querySelectorAll('button')).find((button) => button.textContent?.trim() === label);
   const cells = (): string[][] =>
     Array.from(element.querySelectorAll('tbody tr')).map((row) =>
       Array.from(row.querySelectorAll('td')).map((cell) => cell.textContent?.replace(/\s+/g, ' ').trim() ?? '')
@@ -107,5 +114,53 @@ describe('SquadPanelComponent', () => {
     expect(api.removeSquadMember$).toHaveBeenCalledWith('m2');
     expect(cells().map((row) => row[0])).toEqual(['Pat Player']);
     expect(element.querySelector('app-dialog h2')).toBeNull();
+  });
+
+  for (const [status, message] of [
+    [429, RATE_LIMITED_MESSAGE],
+    [500, "Couldn't refresh the squad, so the list may be out of date. Please try again."],
+  ] as const) {
+    it(`says so when the squad can't be refreshed after a removal (${status}), and keeps the rows`, async () => {
+      await setUp();
+      (element.querySelector('[aria-label="Remove Ana"]') as HTMLButtonElement).click();
+      await settle();
+      api.getSquad$.mockImplementation(failWith(status));
+      (
+        Array.from(element.querySelectorAll('app-dialog button')).find(
+          (b) => b.textContent?.trim() === 'Remove'
+        ) as HTMLButtonElement
+      ).click();
+      await settle();
+      expect(api.removeSquadMember$).toHaveBeenCalledWith('m2');
+      expect(element.querySelector('.squad-panel__error > span')?.textContent).toBe(message);
+      expect(cells().map((row) => row[0])).toEqual(['Pat Player', 'A Ana']);
+
+      api.getSquad$.mockReturnValue(of([member()]));
+      buttonWithText('Try again')!.click();
+      await settle();
+      expect(element.querySelector('.squad-panel__error')).toBeNull();
+      expect(cells().map((row) => row[0])).toEqual(['Pat Player']);
+    });
+  }
+
+  for (const [status, message] of [
+    [429, RATE_LIMITED_MESSAGE],
+    [500, "Couldn't load the squad. Please try again."],
+  ] as const) {
+    it(`shows why the squad couldn't load (${status})`, async () => {
+      await setUp(true, () => api.getSquad$.mockImplementation(failWith(status)));
+      expect(element.querySelector('.squad-panel__error > span')?.textContent).toBe(message);
+      expect(cells()).toEqual([['The squad could not be loaded.']]);
+    });
+  }
+
+  it('loads the squad again from Try again', async () => {
+    await setUp(true, () => api.getSquad$.mockImplementation(failWith(429)));
+    api.getSquad$.mockReturnValue(of([member()]));
+    buttonWithText('Try again')!.click();
+    await settle();
+    expect(api.getSquad$).toHaveBeenCalledTimes(2);
+    expect(element.querySelector('.squad-panel__error')).toBeNull();
+    expect(cells().map((row) => row[0])).toEqual(['Pat Player']);
   });
 });

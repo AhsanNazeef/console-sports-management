@@ -51,6 +51,3 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   apple_pay: 'Apple Pay',
   google_pay: 'Google Pay',
 };
-
-// Roles the backend lets change a payment's status. VIEWER and ORG get 403.
-export const PAYMENT_STATUS_EDITOR_ROLES = ['ADMIN', 'OPERATOR'] as const;

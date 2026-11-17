@@ -1,8 +1,5 @@
 import { StaffCategory } from '../models/member.model';
 
-// Roles the backend lets manage squad and staff (OPERATOR and VIEWER get 403). An ORG account can manage any club.
-export const MEMBER_EDITOR_ROLES = ['ADMIN', 'ORG'] as const;
-
 // Section titles from the Figma Staff page, in the order the backend groups staff.
 export const STAFF_CATEGORY_LABELS: Record<StaffCategory, string> = {
   club_president: 'Club President',

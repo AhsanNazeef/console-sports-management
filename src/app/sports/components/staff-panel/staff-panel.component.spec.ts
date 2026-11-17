@@ -1,5 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
+import { RATE_LIMITED_MESSAGE } from '../../../common/constants/http.constants';
 import { StaffGroup, StaffMember } from '../../models/member.model';
 import { MembersApiService } from '../../services/members-api.service';
 import { StaffPanelComponent } from './staff-panel.component';
@@ -60,6 +62,9 @@ describe('StaffPanelComponent', () => {
     await new Promise((resolve) => setTimeout(resolve));
     await fixture.whenStable();
   };
+  const failWith = (status: number) => () => throwError(() => new HttpErrorResponse({ status }));
+  const buttonWithText = (label: string): HTMLButtonElement | undefined =>
+    Array.from(element.querySelectorAll('button')).find((button) => button.textContent?.trim() === label);
   const text = (selector: string): string[] =>
     Array.from(element.querySelectorAll(selector)).map((node) => node.textContent?.replace(/\s+/g, ' ').trim() ?? '');
 
@@ -135,5 +140,53 @@ describe('StaffPanelComponent', () => {
     await settle();
     expect(api.removeStaffMember$).toHaveBeenCalledWith('s1');
     expect(text('.staff-panel__name')).toEqual(['Cora']);
+  });
+
+  for (const [status, message] of [
+    [429, RATE_LIMITED_MESSAGE],
+    [500, "Couldn't refresh the staff, so the list may be out of date. Please try again."],
+  ] as const) {
+    it(`says so when the staff can't be refreshed after a removal (${status}), and keeps the cards`, async () => {
+      await setUp();
+      (element.querySelector('[aria-label="Remove Ola Operations"]') as HTMLButtonElement).click();
+      await settle();
+      api.getStaffGroups$.mockImplementation(failWith(status));
+      (
+        Array.from(element.querySelectorAll('app-dialog button')).find(
+          (b) => b.textContent?.trim() === 'Remove'
+        ) as HTMLButtonElement
+      ).click();
+      await settle();
+      expect(api.removeStaffMember$).toHaveBeenCalledWith('s1');
+      expect(element.querySelector('.staff-panel__error > span')?.textContent).toBe(message);
+      expect(text('.staff-panel__name')).toEqual(['Ola Operations', 'Cora']);
+
+      api.getStaffGroups$.mockReturnValue(of(groups([])));
+      buttonWithText('Try again')!.click();
+      await settle();
+      expect(element.querySelector('.staff-panel__error')).toBeNull();
+      expect(text('.staff-panel__name')).toEqual(['Cora']);
+    });
+  }
+
+  for (const [status, message] of [
+    [429, RATE_LIMITED_MESSAGE],
+    [500, "Couldn't load the staff. Please try again."],
+  ] as const) {
+    it(`shows why the staff couldn't load (${status})`, async () => {
+      await setUp(true, () => api.getStaffGroups$.mockImplementation(failWith(status)));
+      expect(element.querySelector('.staff-panel__error > span')?.textContent).toBe(message);
+      expect(element.querySelector('.staff-panel__section')).toBeNull();
+    });
+  }
+
+  it('loads the staff again from Try again', async () => {
+    await setUp(true, () => api.getStaffGroups$.mockImplementation(failWith(429)));
+    api.getStaffGroups$.mockReturnValue(of(groups([staffMember()])));
+    buttonWithText('Try again')!.click();
+    await settle();
+    expect(api.getStaffGroups$).toHaveBeenCalledTimes(2);
+    expect(element.querySelector('.staff-panel__error')).toBeNull();
+    expect(text('.staff-panel__name')).toEqual(['Ola Operations', 'Cora']);
   });
 });

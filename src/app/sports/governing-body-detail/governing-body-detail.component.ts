@@ -10,14 +10,15 @@ import { EntityAvatarComponent } from '../../common/components/entity-avatar/ent
 import { PaginationComponent } from '../../common/components/pagination/pagination.component';
 import { StatCardComponent } from '../../common/components/stat-card/stat-card.component';
 import { formatDateTime } from '../../common/utils/datetime.util';
+import { describeLoadError } from '../../common/utils/http-error.util';
 import { createPagedList } from '../../common/utils/paged-list.util';
-import { createReloadable } from '../../common/utils/reloadable.util';
+import { createReloadable, firstLoadError } from '../../common/utils/reloadable.util';
 import { AuthService } from '../../core/auth/services/auth.service';
 import {
   EntityFormDialogComponent,
   EntityFormValue,
 } from '../components/entity-form-dialog/entity-form-dialog.component';
-import { CATALOGUE_EDITOR_ROLES, DEFAULT_CHILD_QUERY, SPORTS_PAGE_SIZE } from '../constants/sports.constants';
+import { DEFAULT_CHILD_QUERY, SPORTS_PAGE_SIZE } from '../constants/sports.constants';
 import { ChildListQuery, Organisation } from '../models/hierarchy.model';
 import { HierarchyApiService } from '../services/hierarchy-api.service';
 import { describeCreateError, isMissing } from '../utils/hierarchy-errors.util';
@@ -51,7 +52,7 @@ export class GoverningBodyDetailPage {
   readonly governingBodyId = input.required<string>();
 
   readonly pageSize = SPORTS_PAGE_SIZE;
-  readonly canEdit = computed(() => this.authService.hasAnyRole(CATALOGUE_EDITOR_ROLES));
+  readonly canEdit = computed(() => this.authService.can('manageCatalogue'));
   // Figma's "Competitions" table.
   readonly columns: DataTableColumn[] = [
     { key: 'name', label: 'Organisations' },
@@ -75,6 +76,12 @@ export class GoverningBodyDetailPage {
     const governingBody = this.governingBody.value();
     return governingBody ? governingBody.sportId !== this.sportId() : isMissing(this.governingBody.errorStatus());
   });
+  readonly loadError = computed(() =>
+    firstLoadError(this.governingBody, "Couldn't load this governing body. Please try again.")
+  );
+  readonly organisationsError = computed(() =>
+    describeLoadError(this.organisations.errorStatus(), "Couldn't load the organisations. Please try again.")
+  );
   readonly sportLink = computed(() => sportLink(this.sportId()));
   readonly breadcrumbs = computed<Breadcrumb[]>(() => {
     const governingBody = this.governingBody.value();

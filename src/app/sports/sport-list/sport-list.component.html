@@ -22,7 +22,7 @@
 
   @if (list.failed()) {
     <div class="sport-list__error" role="alert">
-      <span>Couldn't load the sports. Please try again.</span>
+      <span>{{ listError() }}</span>
       <app-button variant="outline" size="small" (clicked)="retry()">Try again</app-button>
     </div>
   }

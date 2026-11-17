@@ -37,9 +37,6 @@ export const MATCH_STATUS_TABS: readonly TabItem[] = [
   { id: 'CANCELLED', label: MATCH_STATUS_LABELS.CANCELLED },
 ];
 
-// Roles the backend lets schedule, edit, delete and run matches. VIEWER and ORG get 403.
-export const MATCH_EDITOR_ROLES = ['ADMIN', 'OPERATOR'] as const;
-
 // The API's largest page; the catalogue has far fewer sports, and a sport far fewer teams.
 export const MATCH_OPTIONS_LIMIT = 100;
 

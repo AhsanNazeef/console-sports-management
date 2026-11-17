@@ -21,7 +21,8 @@ interface StatRow {
 export class MatchStatsComponent {
   readonly stats = input<MatchStats | null>(null);
   readonly loading = input(false);
-  readonly failed = input(false);
+  // Why the stats couldn't be loaded, shown in their place.
+  readonly error = input<string | null>(null);
 
   readonly totalLabel = computed(() => {
     const total = this.stats()?.totalEvents ?? 0;

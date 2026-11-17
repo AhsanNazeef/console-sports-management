@@ -11,11 +11,11 @@ import { PaginationComponent } from '../../common/components/pagination/paginati
 import { StatusTagComponent, StatusTone } from '../../common/components/status-tag/status-tag.component';
 import { TabsComponent } from '../../common/components/tabs/tabs.component';
 import { formatDateTime } from '../../common/utils/datetime.util';
+import { describeLoadError, httpStatusOf } from '../../common/utils/http-error.util';
 import { createPagedList } from '../../common/utils/paged-list.util';
 import { AuthService } from '../../core/auth/services/auth.service';
 import { MatchFormDialogComponent } from '../components/match-form-dialog/match-form-dialog.component';
 import {
-  MATCH_EDITOR_ROLES,
   MATCH_STATUS_LABELS,
   MATCH_STATUS_TABS,
   MATCH_STATUS_TONES,
@@ -65,13 +65,16 @@ export class MatchListPage {
 
   readonly pageSize = MATCHES_PAGE_SIZE;
   readonly statusTabs = MATCH_STATUS_TABS;
-  readonly canEdit = computed(() => this.authService.hasAnyRole(MATCH_EDITOR_ROLES));
+  readonly canEdit = computed(() => this.authService.can('manageMatches'));
 
   // Starts on the tab, page and order last used; the header search is cleared on every navigation.
   readonly list = createPagedList<Match, MatchQuery>({
     initialQuery: { ...this.listState.query(), search: '' },
     load: (query) => this.matchesApi.getMatches$(query),
   });
+  readonly listError = computed(() =>
+    describeLoadError(this.list.errorStatus(), "Couldn't load the matches. Please try again.")
+  );
 
   readonly columns = computed<DataTableColumn[]>(() => [
     { key: 'sport', label: 'Sport', width: '14%' },
@@ -121,8 +124,11 @@ export class MatchListPage {
           this.teamOptions.set(null);
           return this.matchesApi.getTeams$(sportId).pipe(
             map((teams): TeamOptions => ({ teams, error: null })),
-            catchError((): Observable<TeamOptions> =>
-              of({ teams: null, error: "Couldn't load this sport's teams. Try again." })
+            catchError((error: unknown): Observable<TeamOptions> =>
+              of({
+                teams: null,
+                error: describeLoadError(httpStatusOf(error), "Couldn't load this sport's teams. Try again."),
+              })
             )
           );
         }),
@@ -162,7 +168,10 @@ export class MatchListPage {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (sports) => this.sportOptions.set(sports),
-          error: () => this.optionsError.set("Couldn't load the sports. Close this popup and try again."),
+          error: (error: unknown) =>
+            this.optionsError.set(
+              describeLoadError(httpStatusOf(error), "Couldn't load the sports. Close this popup and try again.")
+            ),
         });
     }
   }

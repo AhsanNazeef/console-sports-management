@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SKIP_HTTP_NOTICE } from '../../common/constants/http.constants';
 import { MembersApiService } from './members-api.service';
 
 const API = environment.apiBaseUrl;
@@ -21,31 +22,38 @@ describe('MembersApiService', () => {
 
   it('reads, adds, changes and removes squad members', async () => {
     const squad = firstValueFrom(api.getSquad$('o1'));
-    http.expectOne(`${API}/organizations/o1/squad`).flush({ success: true, data: [{ id: 'm1' }] });
+    const read = http.expectOne(`${API}/organizations/o1/squad`);
+    expect(read.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
+    read.flush({ success: true, data: [{ id: 'm1' }] });
     expect(await squad).toEqual([{ id: 'm1' }]);
 
     api.addSquadMember$('o1', { userId: 'u1', position: 'Forward' }).subscribe();
     const add = http.expectOne(`${API}/organizations/o1/squad`);
     expect(add.request.method).toBe('POST');
     expect(add.request.body).toEqual({ userId: 'u1', position: 'Forward' });
+    expect(add.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
     add.flush({ success: true, data: {} });
 
     api.updateSquadMember$('m1', { position: 'Defender', agreementEnd: null }).subscribe();
     const update = http.expectOne(`${API}/squad/m1`);
     expect(update.request.method).toBe('PATCH');
     expect(update.request.body).toEqual({ position: 'Defender', agreementEnd: null });
+    expect(update.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
     update.flush({ success: true, data: {} });
 
     const removed = firstValueFrom(api.removeSquadMember$('m1'));
     const remove = http.expectOne(`${API}/squad/m1`);
     expect(remove.request.method).toBe('DELETE');
+    expect(remove.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
     remove.flush(null, { status: 204, statusText: 'No Content' });
     await expect(removed).resolves.toBeUndefined();
   });
 
   it('keeps the staff groups in the order the backend sends them', async () => {
     const groups = firstValueFrom(api.getStaffGroups$('o1'));
-    http.expectOne(`${API}/organizations/o1/staff`).flush({
+    const request = http.expectOne(`${API}/organizations/o1/staff`);
+    expect(request.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
+    request.flush({
       success: true,
       data: {
         data: [],
@@ -72,19 +80,24 @@ describe('MembersApiService', () => {
       photoUrl: null,
     };
     api.addStaffMember$('o1', input).subscribe();
-    expect(http.expectOne(`${API}/organizations/o1/staff`).request.body).toEqual({
+    const add = http.expectOne(`${API}/organizations/o1/staff`).request;
+    expect(add.body).toEqual({
       name: 'Ana',
       roleTitle: 'CEO',
       category: 'executive_management',
     });
+    expect(add.context.get(SKIP_HTTP_NOTICE)).toBe(true);
 
     api.updateStaffMember$('s1', input).subscribe();
     const update = http.expectOne(`${API}/staff/s1`);
     expect(update.request.method).toBe('PATCH');
     expect(update.request.body).toEqual(input);
+    expect(update.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
 
     api.removeStaffMember$('s1').subscribe();
-    expect(http.expectOne(`${API}/staff/s1`).request.method).toBe('DELETE');
+    const remove = http.expectOne(`${API}/staff/s1`).request;
+    expect(remove.method).toBe('DELETE');
+    expect(remove.context.get(SKIP_HTTP_NOTICE)).toBe(true);
   });
 
   it('searches users by name or email', () => {
@@ -92,5 +105,6 @@ describe('MembersApiService', () => {
     const request = http.expectOne((req) => req.url === `${API}/users`);
     expect(request.request.params.get('search')).toBe('ada');
     expect(request.request.params.get('limit')).toBe('8');
+    expect(request.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
   });
 });

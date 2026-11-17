@@ -10,14 +10,14 @@ import { EntityAvatarComponent } from '../../common/components/entity-avatar/ent
 import { PaginationComponent } from '../../common/components/pagination/pagination.component';
 import { TabItem, TabsComponent } from '../../common/components/tabs/tabs.component';
 import { formatDateTime } from '../../common/utils/datetime.util';
+import { describeLoadError } from '../../common/utils/http-error.util';
 import { createPagedList } from '../../common/utils/paged-list.util';
-import { createReloadable } from '../../common/utils/reloadable.util';
+import { createReloadable, firstLoadError, refreshError } from '../../common/utils/reloadable.util';
 import { AuthService } from '../../core/auth/services/auth.service';
 import { ParticipantFormDialogComponent } from '../components/participant-form-dialog/participant-form-dialog.component';
 import { SquadPanelComponent } from '../components/squad-panel/squad-panel.component';
 import { StaffPanelComponent } from '../components/staff-panel/staff-panel.component';
-import { MEMBER_EDITOR_ROLES } from '../constants/members.constants';
-import { CATALOGUE_EDITOR_ROLES, DEFAULT_CHILD_QUERY, SPORTS_PAGE_SIZE } from '../constants/sports.constants';
+import { DEFAULT_CHILD_QUERY, SPORTS_PAGE_SIZE } from '../constants/sports.constants';
 import { ChildListQuery, NewParticipant, Participant } from '../models/hierarchy.model';
 import { HierarchyApiService } from '../services/hierarchy-api.service';
 import { SportsApiService } from '../services/sports-api.service';
@@ -56,9 +56,11 @@ export class OrganisationDetailPage {
   readonly organisationId = input.required<string>();
 
   readonly pageSize = SPORTS_PAGE_SIZE;
-  readonly canEdit = computed(() => this.authService.hasAnyRole(CATALOGUE_EDITOR_ROLES));
-  // Squad and staff have their own writers: ADMIN and ORG.
-  readonly canEditMembers = computed(() => this.authService.hasAnyRole(MEMBER_EDITOR_ROLES));
+  readonly canEdit = computed(() => this.authService.can('manageCatalogue'));
+  // Squad and staff have their own writers: ADMIN on any club, ORG only on its own.
+  readonly canEditMembers = computed(() =>
+    this.authService.can('manageMembers', { organisationId: this.organisationId() })
+  );
   readonly tabs: TabItem[] = [
     { id: 'participants', label: 'Participants' },
     { id: 'squad', label: 'Squad' },
@@ -71,7 +73,7 @@ export class OrganisationDetailPage {
 
   // The organisation (with its governing body and teams) and the sport, for the breadcrumbs.
   readonly organisation = createReloadable((id) => this.hierarchyApi.getOrganisation$(id), this.organisationId);
-  readonly sport = createReloadable((id) => this.sportsApi.getSport$(id), this.sportId);
+  readonly sport = createReloadable((id) => this.sportsApi.getSport$(id, false), this.sportId);
   readonly participants = createPagedList<Participant, ChildListQuery>({
     initialQuery: DEFAULT_CHILD_QUERY,
     load: (query, organisationId) => this.hierarchyApi.getParticipants$(organisationId, query),
@@ -89,6 +91,19 @@ export class OrganisationDetailPage {
       ? organisation.governingBodyId !== this.governingBodyId()
       : isMissing(this.organisation.errorStatus());
   });
+  readonly loadError = computed(() =>
+    firstLoadError(this.organisation, "Couldn't load this organisation. Please try again.")
+  );
+  // A failed refresh after adding a participant: the teams in the header may be out of date.
+  readonly organisationRefreshError = computed(() =>
+    refreshError(
+      this.organisation,
+      "Couldn't refresh this organisation, so its teams may be out of date. Please try again."
+    )
+  );
+  readonly participantsError = computed(() =>
+    describeLoadError(this.participants.errorStatus(), "Couldn't load the participants. Please try again.")
+  );
   readonly governingBodyLink = computed(() => governingBodyLink(this.sportId(), this.governingBodyId()));
   readonly breadcrumbs = computed<Breadcrumb[]>(() => {
     const organisation = this.organisation.value();

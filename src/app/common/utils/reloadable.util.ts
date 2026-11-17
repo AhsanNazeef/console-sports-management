@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Signal, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { inject, Injector, Signal, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import {
   BehaviorSubject,
@@ -13,6 +14,8 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
+import { focusMainIfRemoved } from './focus.util';
+import { describeLoadError } from './http-error.util';
 
 export interface Reloadable<T> {
   readonly value: Signal<T | null>;
@@ -27,7 +30,10 @@ type Load<T> = { value: T; errorStatus: null } | { value: null; errorStatus: num
 // Loads a value (an entity, a set of totals) and loads it again on reload(). A failed reload keeps the last value.
 // With a key (a route id), it waits for the key and starts fresh whenever the key changes.
 // Call it in an injection context (a field initializer or constructor); it stops with the component.
+// If a reload removes the control that was clicked (a Try again button whose row goes away), focus moves to the page.
 export function createReloadable<T>(load: (key: string) => Observable<T>, key?: Signal<string>): Reloadable<T> {
+  const injector = inject(Injector);
+  const document = inject(DOCUMENT);
   const value = signal<T | null>(null);
   const loading = signal(true);
   const errorStatus = signal<number | null>(null);
@@ -66,6 +72,28 @@ export function createReloadable<T>(load: (key: string) => Observable<T>, key?: 
     value: value.asReadonly(),
     loading: loading.asReadonly(),
     errorStatus: errorStatus.asReadonly(),
-    reload: () => reload$.next(),
+    reload: () => {
+      const focused = document.activeElement;
+      reload$.next();
+      focusMainIfRemoved(injector, focused);
+    },
   };
+}
+
+// Why the first load failed, while no value has loaded and no load is running; otherwise null. Pages show it with
+// Try again where the value would be.
+export function firstLoadError<T>(reloadable: Reloadable<T>, fallback: string): string | null {
+  if (reloadable.value() !== null || reloadable.loading() || reloadable.errorStatus() === null) {
+    return null;
+  }
+  return describeLoadError(reloadable.errorStatus(), fallback);
+}
+
+// Why a reload failed while the last value is still shown, so what the page shows may be out of date; otherwise null.
+// Pages show it next to their Try again, with the stale value left in place.
+export function refreshError<T>(reloadable: Reloadable<T>, fallback: string): string | null {
+  if (reloadable.value() === null || reloadable.loading() || reloadable.errorStatus() === null) {
+    return null;
+  }
+  return describeLoadError(reloadable.errorStatus(), fallback);
 }

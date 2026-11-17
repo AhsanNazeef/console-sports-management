@@ -1,4 +1,5 @@
-import { Signal, signal, WritableSignal, inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { computed, Signal, signal, WritableSignal, inject } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import {
   BehaviorSubject,
@@ -28,6 +29,8 @@ export interface PagedList<T, Q extends PagedQuery> {
   readonly rows: Signal<readonly T[]>;
   readonly total: Signal<number>;
   readonly loading: Signal<boolean>;
+  // HTTP status of the last failed load (0 when the server couldn't be reached), or null after a success.
+  readonly errorStatus: Signal<number | null>;
   readonly failed: Signal<boolean>;
   goToPage(page: number): void;
   reload(): void;
@@ -40,10 +43,8 @@ export interface PagedListOptions<T, Q extends PagedQuery> {
   parentId?: Signal<string>;
 }
 
-interface PageLoad<T, Q> {
-  query: Q;
-  response: ApiListResponse<T> | null;
-}
+type PageLoad<T, Q> =
+  { query: Q; response: ApiListResponse<T>; errorStatus: null } | { query: Q; response: null; errorStatus: number };
 
 // A server-paged list that follows the header search (debounced, back to page 1) and can be reloaded.
 // Call it in an injection context (a field initializer or constructor); it stops with the component.
@@ -53,7 +54,7 @@ export function createPagedList<T, Q extends PagedQuery>(options: PagedListOptio
   const rows = signal<readonly T[]>([]);
   const total = signal(0);
   const loading = signal(true);
-  const failed = signal(false);
+  const errorStatus = signal<number | null>(null);
   const reload$ = new BehaviorSubject<void>(undefined);
   const goToPage = (page: number): void => query.update((current) => ({ ...current, page }));
 
@@ -81,15 +82,17 @@ export function createPagedList<T, Q extends PagedQuery>(options: PagedListOptio
       tap(() => loading.set(true)),
       switchMap(([parentId, current]) =>
         options.load(current, parentId).pipe(
-          map((response): PageLoad<T, Q> => ({ query: current, response })),
-          catchError((): Observable<PageLoad<T, Q>> => of({ query: current, response: null }))
+          map((response): PageLoad<T, Q> => ({ query: current, response, errorStatus: null })),
+          catchError((error: unknown): Observable<PageLoad<T, Q>> =>
+            of({ query: current, response: null, errorStatus: error instanceof HttpErrorResponse ? error.status : 0 })
+          )
         )
       ),
       takeUntilDestroyed()
     )
-    .subscribe(({ query: loaded, response }) => {
+    .subscribe(({ query: loaded, response, errorStatus: status }) => {
       loading.set(false);
-      failed.set(!response);
+      errorStatus.set(status);
       if (!response) {
         return;
       }
@@ -107,7 +110,8 @@ export function createPagedList<T, Q extends PagedQuery>(options: PagedListOptio
     rows: rows.asReadonly(),
     total: total.asReadonly(),
     loading: loading.asReadonly(),
-    failed: failed.asReadonly(),
+    errorStatus: errorStatus.asReadonly(),
+    failed: computed(() => errorStatus() !== null),
     goToPage,
     reload: () => reload$.next(),
   };

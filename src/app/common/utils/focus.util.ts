@@ -1,3 +1,5 @@
+import { DOCUMENT } from '@angular/common';
+import { afterNextRender, Injector } from '@angular/core';
 import { OverlayStackService } from '../services/overlay-stack.service';
 
 const FOCUSABLE =
@@ -40,4 +42,22 @@ export function restoreFocus(control: HTMLElement | null, overlays: OverlayStack
   if (control.ownerDocument.activeElement !== control) {
     overlays.top()?.focusInside();
   }
+}
+
+// A control that is removed while it has focus (a Try again button whose row goes away) drops focus to <body>. Pass the
+// control that had focus when the action started: once the next render has removed it, the page's main content
+// (`main[tabindex="-1"]`) takes focus instead, so keyboard and screen-reader users keep their place.
+export function focusMainIfRemoved(injector: Injector, control: Element | null): void {
+  const document = injector.get(DOCUMENT);
+  if (!control || control === document.body) {
+    return;
+  }
+  afterNextRender(
+    () => {
+      if (!control.isConnected) {
+        document.querySelector<HTMLElement>('main[tabindex="-1"]')?.focus();
+      }
+    },
+    { injector }
+  );
 }

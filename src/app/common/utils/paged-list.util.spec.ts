@@ -1,6 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Observable, of, Subject } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import { ApiListResponse } from '../models/api.model';
 import { SearchService } from '../services/search.service';
 import { createPagedList, PagedQuery } from './paged-list.util';
@@ -81,7 +82,26 @@ describe('createPagedList', () => {
     failing.error(new Error('down'));
     await settle();
     expect(host.list.failed()).toBe(true);
+    expect(host.list.errorStatus()).toBe(0);
     expect(host.list.rows().length).toBe(2);
+  });
+
+  it('reports the HTTP status of a failed load until a later load succeeds', async () => {
+    parentId.set('sport-1');
+    load.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 429 })));
+    const host = create();
+    TestBed.tick();
+    await settle();
+    expect(host.list.errorStatus()).toBe(429);
+    expect(host.list.failed()).toBe(true);
+    expect(host.list.loading()).toBe(false);
+
+    load.mockReturnValue(of(response(['a'], 1)));
+    host.list.reload();
+    await settle();
+    expect(host.list.errorStatus()).toBeNull();
+    expect(host.list.failed()).toBe(false);
+    expect(host.list.rows().map((row) => row.id)).toEqual(['a']);
   });
 
   it('steps back when the current page no longer exists', async () => {

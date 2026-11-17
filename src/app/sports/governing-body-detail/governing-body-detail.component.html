@@ -8,14 +8,21 @@
     </div>
   } @else {
     <div class="detail-page__summary">
-      <app-detail-header
-        class="detail-page__header"
-        layout="stacked"
-        [title]="governingBody.value()?.name ?? ''"
-        [seed]="governingBodyId()"
-        [fields]="fields()"
-        [loading]="!governingBody.value()"
-      />
+      @if (loadError(); as message) {
+        <div class="detail-page__error detail-page__header" role="alert">
+          <span>{{ message }}</span>
+          <app-button variant="outline" size="small" (clicked)="governingBody.reload()">Try again</app-button>
+        </div>
+      } @else {
+        <app-detail-header
+          class="detail-page__header"
+          layout="stacked"
+          [title]="governingBody.value()?.name ?? ''"
+          [seed]="governingBodyId()"
+          [fields]="fields()"
+          [loading]="!governingBody.value()"
+        />
+      }
 
       <section class="detail-page__side-stats" aria-label="Governing body totals">
         <app-stat-card
@@ -42,7 +49,7 @@
 
     @if (organisations.failed()) {
       <div class="detail-page__error" role="alert">
-        <span>Couldn't load the organisations. Please try again.</span>
+        <span>{{ organisationsError() }}</span>
         <app-button variant="outline" size="small" (clicked)="organisations.reload()">Try again</app-button>
       </div>
     }

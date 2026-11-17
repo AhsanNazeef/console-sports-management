@@ -1,7 +1,7 @@
 <div class="staff-panel" [attr.aria-busy]="staff.loading()">
-  @if (failed()) {
+  @if (loadError() ?? refreshFailure(); as message) {
     <div class="staff-panel__error" role="alert">
-      <span>Couldn't load the staff. Please try again.</span>
+      <span>{{ message }}</span>
       <app-button variant="outline" size="small" (clicked)="staff.reload()">Try again</app-button>
     </div>
   }

@@ -1,7 +1,7 @@
 <div class="shell" [class.shell--phone]="isPhone()" [class.shell--drawer-open]="showDrawer()">
   <app-sidebar
     class="shell__sidebar"
-    [groups]="navGroups"
+    [groups]="navGroups()"
     [collapsed]="!isPhone() && sidebarCollapsed()"
     [userEmail]="userEmail()"
     (collapsedChange)="onSidebarCollapsedChange($event)"
@@ -25,7 +25,21 @@
       (menuClicked)="drawerOpen.set(true)"
       (searchQueryChange)="onSearchQueryChange($event)"
     />
-    <main class="shell__content">
+    @if (accessErrorMessage(); as message) {
+      <div class="shell__notice" role="alert">
+        <span>{{ message }}</span>
+        <app-button variant="outline" size="small" [disabled]="reloadingAccess()" (clicked)="reloadAccess()">
+          {{ reloadingAccess() ? 'Loading…' : 'Try again' }}
+        </app-button>
+      </div>
+    }
+    @if (notice(); as message) {
+      <div class="shell__notice" role="alert">
+        <span>{{ message }}</span>
+        <app-button variant="outline" size="small" (clicked)="dismissNotice()">Dismiss</app-button>
+      </div>
+    }
+    <main class="shell__content" tabindex="-1">
       <router-outlet />
     </main>
   </div>

@@ -10,14 +10,15 @@ import { EntityAvatarComponent } from '../../common/components/entity-avatar/ent
 import { PaginationComponent } from '../../common/components/pagination/pagination.component';
 import { StatCardComponent } from '../../common/components/stat-card/stat-card.component';
 import { formatDateTime } from '../../common/utils/datetime.util';
+import { describeLoadError } from '../../common/utils/http-error.util';
 import { createPagedList } from '../../common/utils/paged-list.util';
-import { createReloadable } from '../../common/utils/reloadable.util';
+import { createReloadable, firstLoadError } from '../../common/utils/reloadable.util';
 import { AuthService } from '../../core/auth/services/auth.service';
 import {
   EntityFormDialogComponent,
   EntityFormValue,
 } from '../components/entity-form-dialog/entity-form-dialog.component';
-import { CATALOGUE_EDITOR_ROLES, DEFAULT_CHILD_QUERY, SPORTS_PAGE_SIZE } from '../constants/sports.constants';
+import { DEFAULT_CHILD_QUERY, SPORTS_PAGE_SIZE } from '../constants/sports.constants';
 import { ChildListQuery, GoverningBody } from '../models/hierarchy.model';
 import { HierarchyApiService } from '../services/hierarchy-api.service';
 import { SportsApiService } from '../services/sports-api.service';
@@ -52,7 +53,7 @@ export class SportDetailPage {
   readonly sportId = input.required<string>();
 
   readonly pageSize = SPORTS_PAGE_SIZE;
-  readonly canEdit = computed(() => this.authService.hasAnyRole(CATALOGUE_EDITOR_ROLES));
+  readonly canEdit = computed(() => this.authService.can('manageCatalogue'));
   // Figma's "Main Entities" table.
   readonly columns: DataTableColumn[] = [
     { key: 'name', label: 'Governing Bodies' },
@@ -73,6 +74,10 @@ export class SportDetailPage {
   readonly saveError = signal<string | null>(null);
 
   readonly notFound = computed(() => !this.sport.value() && isMissing(this.sport.errorStatus()));
+  readonly loadError = computed(() => firstLoadError(this.sport, "Couldn't load this sport. Please try again."));
+  readonly governingBodiesError = computed(() =>
+    describeLoadError(this.governingBodies.errorStatus(), "Couldn't load the governing bodies. Please try again.")
+  );
   readonly breadcrumbs = computed<Breadcrumb[]>(() => [
     { label: 'Sport', link: '/sports' },
     { label: this.sport.value()?.name ?? '…' },

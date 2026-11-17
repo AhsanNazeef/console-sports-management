@@ -1,5 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { RATE_LIMITED_MESSAGE } from '../../../common/constants/http.constants';
 import { USER_SEARCH_DEBOUNCE_MS } from '../../constants/members.constants';
 import { UserSummary } from '../../models/member.model';
 import { MembersApiService } from '../../services/members-api.service';
@@ -56,4 +58,16 @@ describe('UserPickerComponent', () => {
     await type('zed');
     expect(element.textContent).toContain('No users match “zed”.');
   });
+
+  for (const [status, message] of [
+    [429, RATE_LIMITED_MESSAGE],
+    [500, "Couldn't search users. Try again."],
+  ] as const) {
+    it(`says why the search failed (${status})`, async () => {
+      searchUsers$.mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+      await type('ada');
+      expect(element.querySelector('.user-picker__hint--error')?.textContent).toBe(message);
+      expect(element.querySelector('.user-picker__option')).toBeNull();
+    });
+  }
 });

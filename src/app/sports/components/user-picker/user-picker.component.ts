@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { catchError, debounceTime, distinctUntilChanged, map, Observable, of, startWith, switchMap } from 'rxjs';
 import { EntityAvatarComponent } from '../../../common/components/entity-avatar/entity-avatar.component';
 import { TextInputComponent } from '../../../common/components/text-input/text-input.component';
+import { describeLoadError, httpStatusOf } from '../../../common/utils/http-error.util';
 import { USER_SEARCH_DEBOUNCE_MS, USER_SEARCH_MIN_LENGTH } from '../../constants/members.constants';
 import { UserSummary } from '../../models/member.model';
 import { MembersApiService } from '../../services/members-api.service';
@@ -13,7 +14,7 @@ type UserSearch =
   | { status: 'idle' }
   | { status: 'searching' }
   | { status: 'done'; term: string; users: UserSummary[] }
-  | { status: 'failed' };
+  | { status: 'failed'; message: string };
 
 // Finds a user account by name or email, searching the server as the user types. Used to add a squad member.
 @Component({
@@ -43,7 +44,12 @@ export class UserPickerComponent {
         }
         return this.membersApi.searchUsers$(term).pipe(
           map((users): UserSearch => ({ status: 'done', term, users })),
-          catchError(() => of<UserSearch>({ status: 'failed' })),
+          catchError((error: unknown) =>
+            of<UserSearch>({
+              status: 'failed',
+              message: describeLoadError(httpStatusOf(error), "Couldn't search users. Try again."),
+            })
+          ),
           startWith<UserSearch>({ status: 'searching' })
         );
       })

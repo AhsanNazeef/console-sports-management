@@ -8,8 +8,12 @@ import { SidebarComponent } from './sidebar.component';
 class BlankPage {}
 
 const GROUPS: NavGroup[] = [
-  { id: 'match', label: 'Match Management', items: [{ label: 'Sports', path: '/sports', icon: 'ic_sport' }] },
-  { id: 'system', label: 'System', items: [{ label: 'Users', path: '/users', icon: 'ic_users' }] },
+  {
+    id: 'match',
+    label: 'Match Management',
+    items: [{ label: 'Sports', path: '/sports', icon: 'ic_sport', access: null }],
+  },
+  { id: 'system', label: 'System', items: [{ label: 'Users', path: '/users', icon: 'ic_users', access: null }] },
 ];
 
 describe('SidebarComponent', () => {

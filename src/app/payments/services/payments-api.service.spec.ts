@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SKIP_HTTP_NOTICE } from '../../common/constants/http.constants';
 import { DEFAULT_TRANSACTION_QUERY } from '../constants/payments.constants';
 import { PaymentsApiService } from './payments-api.service';
 
@@ -23,9 +24,12 @@ describe('PaymentsApiService', () => {
 
   it('reads the summary', async () => {
     const summary = firstValueFrom(api.getSummary$());
-    http
-      .expectOne(`${BASE}/summary`)
-      .flush({ success: true, data: { byStatus: [], grossRevenue: '$0.00', grossRevenueMinor: 0, byCurrency: [] } });
+    const request = http.expectOne(`${BASE}/summary`);
+    expect(request.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
+    request.flush({
+      success: true,
+      data: { byStatus: [], grossRevenue: '$0.00', grossRevenueMinor: 0, byCurrency: [] },
+    });
     expect((await summary).byCurrency).toEqual([]);
   });
 
@@ -49,6 +53,7 @@ describe('PaymentsApiService', () => {
       'amount',
       'desc',
     ]);
+    expect(request.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
     request.flush(EMPTY_PAGE);
   });
 
@@ -72,12 +77,15 @@ describe('PaymentsApiService', () => {
 
   it('reads a transaction and changes its status', () => {
     api.getTransaction$('x1').subscribe();
-    http.expectOne(`${BASE}/transactions/x1`).flush({ success: true, data: { id: 'x1' } });
+    const read = http.expectOne(`${BASE}/transactions/x1`);
+    expect(read.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
+    read.flush({ success: true, data: { id: 'x1' } });
 
     api.changeStatus$('x1', 'REFUNDED').subscribe();
     const patch = http.expectOne(`${BASE}/transactions/x1/status`);
     expect(patch.request.method).toBe('PATCH');
     expect(patch.request.body).toEqual({ status: 'REFUNDED' });
+    expect(patch.request.context.get(SKIP_HTTP_NOTICE)).toBe(true);
     patch.flush({ success: true, data: { id: 'x1', status: 'REFUNDED' } });
   });
 

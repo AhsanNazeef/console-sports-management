@@ -7,13 +7,20 @@
       <a routerLink="/sports" skipLocationChange>Back to all sports</a>
     </div>
   } @else {
-    <app-detail-header
-      [title]="sport.value()?.name ?? ''"
-      [imageUrl]="sport.value()?.iconUrl ?? null"
-      [seed]="sportId()"
-      [fields]="fields()"
-      [loading]="!sport.value()"
-    />
+    @if (loadError(); as message) {
+      <div class="detail-page__error" role="alert">
+        <span>{{ message }}</span>
+        <app-button variant="outline" size="small" (clicked)="sport.reload()">Try again</app-button>
+      </div>
+    } @else {
+      <app-detail-header
+        [title]="sport.value()?.name ?? ''"
+        [imageUrl]="sport.value()?.iconUrl ?? null"
+        [seed]="sportId()"
+        [fields]="fields()"
+        [loading]="!sport.value()"
+      />
+    }
 
     <section class="detail-page__stats" aria-label="Sport totals">
       <app-stat-card
@@ -38,7 +45,7 @@
 
     @if (governingBodies.failed()) {
       <div class="detail-page__error" role="alert">
-        <span>Couldn't load the governing bodies. Please try again.</span>
+        <span>{{ governingBodiesError() }}</span>
         <app-button variant="outline" size="small" (clicked)="governingBodies.reload()">Try again</app-button>
       </div>
     }

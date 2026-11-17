@@ -7,22 +7,36 @@
       <a routerLink="/matches" skipLocationChange>Back to the matches</a>
     </div>
   } @else {
-    <app-match-header [match]="match.value()" [score]="score()">
-      @if (statusActions().length > 0) {
-        <div class="match-detail__status-actions" match-header-actions>
-          @for (action of statusActions(); track action.status) {
-            <app-button
-              size="small"
-              [variant]="action.status === 'LIVE' ? 'primary' : 'outline'"
-              [disabled]="isSaving()"
-              (clicked)="requestStatus(action)"
-            >
-              {{ action.label }}
-            </app-button>
-          }
-        </div>
-      }
-    </app-match-header>
+    @if (loadError(); as message) {
+      <div class="match-detail__error" role="alert">
+        <span>{{ message }}</span>
+        <app-button variant="outline" size="small" (clicked)="match.reload()">Try again</app-button>
+      </div>
+    } @else {
+      <app-match-header [match]="match.value()" [score]="score()">
+        @if (statusActions().length > 0) {
+          <div class="match-detail__status-actions" match-header-actions>
+            @for (action of statusActions(); track action.status) {
+              <app-button
+                size="small"
+                [variant]="action.status === 'LIVE' ? 'primary' : 'outline'"
+                [disabled]="isSaving()"
+                (clicked)="requestStatus(action)"
+              >
+                {{ action.label }}
+              </app-button>
+            }
+          </div>
+        }
+      </app-match-header>
+    }
+
+    @if (matchRefreshError(); as message) {
+      <div class="match-detail__error" role="alert">
+        <span>{{ message }}</span>
+        <app-button variant="outline" size="small" (clicked)="match.reload()">Try again</app-button>
+      </div>
+    }
 
     @if (statusError(); as message) {
       @if (!confirming()) {
@@ -57,7 +71,7 @@
           [teams]="teams()"
           [players]="players.value() ?? []"
           [loading]="timeline.loading()"
-          [failed]="timeline.errorStatus() !== null && !timeline.value()"
+          [error]="timelineError()"
         />
       </section>
 
@@ -68,11 +82,10 @@
             <app-button variant="outline" size="small" (clicked)="stats.reload()">Try again</app-button>
           }
         </div>
-        <app-match-stats
-          [stats]="stats.value()"
-          [loading]="stats.loading()"
-          [failed]="stats.errorStatus() !== null && !stats.value()"
-        />
+        @if (statsRefreshError(); as message) {
+          <div class="match-detail__error" role="alert">{{ message }}</div>
+        }
+        <app-match-stats [stats]="stats.value()" [loading]="stats.loading()" [error]="statsError()" />
       </section>
     </div>
   }

@@ -7,12 +7,19 @@
       <a [routerLink]="organisationLink()" skipLocationChange>Back to the organisation</a>
     </div>
   } @else {
-    <app-detail-header
-      layout="stacked"
-      [title]="fullName()"
-      [seed]="participantId()"
-      [fields]="fields()"
-      [loading]="!participant.value()"
-    />
+    @if (loadError(); as message) {
+      <div class="detail-page__error" role="alert">
+        <span>{{ message }}</span>
+        <app-button variant="outline" size="small" (clicked)="participant.reload()">Try again</app-button>
+      </div>
+    } @else {
+      <app-detail-header
+        layout="stacked"
+        [title]="fullName()"
+        [seed]="participantId()"
+        [fields]="fields()"
+        [loading]="!participant.value()"
+      />
+    }
   }
 </div>

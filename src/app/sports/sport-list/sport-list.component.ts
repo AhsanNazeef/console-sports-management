@@ -7,14 +7,14 @@ import { ButtonComponent } from '../../common/components/button/button.component
 import { DialogComponent } from '../../common/components/dialog/dialog.component';
 import { PaginationComponent } from '../../common/components/pagination/pagination.component';
 import { StatCardComponent } from '../../common/components/stat-card/stat-card.component';
-import { describeHttpError } from '../../common/utils/http-error.util';
+import { describeHttpError, describeLoadError } from '../../common/utils/http-error.util';
 import { createPagedList } from '../../common/utils/paged-list.util';
 import { createReloadable } from '../../common/utils/reloadable.util';
 import { AuthService } from '../../core/auth/services/auth.service';
 import { SportFormDialogComponent } from '../components/sport-form-dialog/sport-form-dialog.component';
 import { SportImportDialogComponent } from '../components/sport-import-dialog/sport-import-dialog.component';
 import { SportsTableComponent } from '../components/sports-table/sports-table.component';
-import { CATALOGUE_EDITOR_ROLES, DEFAULT_SPORT_QUERY, SPORTS_PAGE_SIZE } from '../constants/sports.constants';
+import { DEFAULT_SPORT_QUERY, SPORTS_PAGE_SIZE } from '../constants/sports.constants';
 import { SportImportProgress, SportImportRow } from '../models/sport-import.model';
 import { Sport, SportInput, SportQuery } from '../models/sport.model';
 import { SportImportService } from '../services/sport-import.service';
@@ -46,7 +46,7 @@ export class SportListPage {
 
   readonly breadcrumbs: Breadcrumb[] = [{ label: 'Sport' }];
   readonly pageSize = SPORTS_PAGE_SIZE;
-  readonly canEdit = computed(() => this.authService.hasAnyRole(CATALOGUE_EDITOR_ROLES));
+  readonly canEdit = computed(() => this.authService.can('manageCatalogue'));
 
   // Server-side search (header search box), paging and sorting.
   readonly list = createPagedList<Sport, SportQuery>({
@@ -54,6 +54,9 @@ export class SportListPage {
     load: (query) => this.sportsApi.getSports$(query),
   });
   readonly totals = createReloadable(() => this.sportsApi.getCatalogueTotals$());
+  readonly listError = computed(() =>
+    describeLoadError(this.list.errorStatus(), "Couldn't load the sports. Please try again.")
+  );
 
   readonly formOpen = signal(false);
   readonly editing = signal<Sport | null>(null);

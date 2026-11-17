@@ -8,7 +8,7 @@ import { DialogComponent } from '../../../common/components/dialog/dialog.compon
 import { EntityAvatarComponent } from '../../../common/components/entity-avatar/entity-avatar.component';
 import { formatDate } from '../../../common/utils/datetime.util';
 import { describeHttpError } from '../../../common/utils/http-error.util';
-import { createReloadable } from '../../../common/utils/reloadable.util';
+import { createReloadable, firstLoadError, refreshError } from '../../../common/utils/reloadable.util';
 import { SquadMember, SquadMemberFormValue } from '../../models/member.model';
 import { MembersApiService } from '../../services/members-api.service';
 import { SquadMemberFormDialogComponent } from '../squad-member-form-dialog/squad-member-form-dialog.component';
@@ -44,8 +44,14 @@ export class SquadPanelComponent {
     { key: 'agreementEnd', label: 'Agreement End', shaded: true, width: '160px' },
     ...(this.canEdit() ? [{ key: 'actions', label: 'Actions', width: '88px' }] : []),
   ]);
-  readonly failed = computed(() => this.squad.errorStatus() !== null && !this.squad.value());
-  readonly emptyMessage = computed(() => (this.failed() ? 'The squad could not be loaded.' : 'No squad members yet.'));
+  readonly loadError = computed(() => firstLoadError(this.squad, "Couldn't load the squad. Please try again."));
+  // A failed refresh after a save or removal: the rows may be out of date.
+  readonly refreshFailure = computed(() =>
+    refreshError(this.squad, "Couldn't refresh the squad, so the list may be out of date. Please try again.")
+  );
+  readonly emptyMessage = computed(() =>
+    this.loadError() ? 'The squad could not be loaded.' : 'No squad members yet.'
+  );
 
   readonly formOpen = signal(false);
   readonly editing = signal<SquadMember | null>(null);

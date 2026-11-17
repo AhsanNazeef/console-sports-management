@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { RATE_LIMITED_MESSAGE } from '../../../common/constants/http.constants';
 import { STATS } from '../../testing/match.fixtures';
 import { MatchStatsComponent } from './match-stats.component';
 
@@ -42,13 +43,23 @@ describe('MatchStatsComponent', () => {
     expect(element.querySelector('.match-stats__empty')?.textContent).toBe('No events yet.');
   });
 
-  it('shows placeholders while loading and a message when loading failed', () => {
+  it('shows placeholders while loading', () => {
     fixture.componentRef.setInput('loading', true);
     fixture.detectChanges();
     expect(element.querySelectorAll('app-skeleton').length).toBe(9);
+    expect(element.querySelector('.match-stats__empty')).toBeNull();
+  });
 
-    fixture.componentRef.setInput('failed', true);
+  it('shows why the stats could not be loaded in place of the rows', () => {
+    fixture.componentRef.setInput('error', RATE_LIMITED_MESSAGE);
     fixture.detectChanges();
-    expect(element.querySelector('.match-stats__empty')?.textContent).toBe('The stats could not be loaded.');
+    expect(element.querySelector('.match-stats__empty')?.textContent).toBe(RATE_LIMITED_MESSAGE);
+    expect(element.querySelector('table')).toBeNull();
+    expect(element.querySelectorAll('app-skeleton').length).toBe(0);
+
+    fixture.componentRef.setInput('error', null);
+    fixture.detectChanges();
+    expect(element.querySelector('.match-stats__empty')).toBeNull();
+    expect(element.querySelectorAll('app-skeleton').length).toBe(9);
   });
 });

@@ -2,6 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable, of, Subject, throwError } from 'rxjs';
+import { authServiceAs } from '../../../testing/auth.fixtures';
+import { UserRole } from '../../auth/models/auth.model';
+import { FORBIDDEN_LOAD_MESSAGE, RATE_LIMITED_MESSAGE } from '../../common/constants/http.constants';
 import { AuthService } from '../../core/auth/services/auth.service';
 import { MatchLiveUpdate } from '../models/match-event.model';
 import { Match, MatchStatus } from '../models/match.model';
@@ -26,7 +29,8 @@ describe('MatchDetailPage', () => {
   // The live connection: what the page subscribed to, and whether it still listens.
   let live: { updates: Subject<MatchLiveUpdate>; watched: string[]; listening: () => boolean };
 
-  async function setUp(status: MatchStatus, canEdit = true): Promise<void> {
+  // configure runs before the page loads, to change what the backend answers.
+  async function setUp(status: MatchStatus, role: UserRole = 'ADMIN', configure?: () => void): Promise<void> {
     current = match('m1', status);
     api = {
       getMatch$: vi.fn(() => of(current)),
@@ -51,6 +55,7 @@ describe('MatchDetailPage', () => {
       ),
       addEvent$: vi.fn(() => of(matchEvent('e9', 40, { teamId: HOME.id }))),
     };
+    configure?.();
     const updates = new Subject<MatchLiveUpdate>();
     live = { updates, watched: [], listening: () => updates.observed };
     await TestBed.configureTestingModule({
@@ -58,7 +63,7 @@ describe('MatchDetailPage', () => {
       providers: [
         provideRouter([]),
         { provide: MatchesApiService, useValue: api },
-        { provide: AuthService, useValue: { hasAnyRole: () => canEdit } },
+        { provide: AuthService, useValue: authServiceAs(role) },
         {
           provide: MatchLiveService,
           useValue: {
@@ -89,6 +94,10 @@ describe('MatchDetailPage', () => {
   const buttonWithText = (text: string, root: ParentNode = element): HTMLButtonElement =>
     Array.from(root.querySelectorAll('button')).find((button) => button.textContent?.trim() === text)!;
   const tag = (): string => element.querySelector('app-match-header app-status-tag')?.textContent?.trim() ?? '';
+  const timelineRows = (): string[] =>
+    Array.from(element.querySelectorAll('app-match-timeline tbody tr.data-table__row')).map(
+      (row) => row.querySelector('td')?.textContent?.trim() ?? ''
+    );
 
   it('shows the match header, timeline and stats, with a breadcrumb back to the list', async () => {
     await setUp('LIVE');
@@ -158,10 +167,18 @@ describe('MatchDetailPage', () => {
     expect(statusButtons()).toEqual(['Finish Match', 'Cancel Match']);
   });
 
-  it('shows no status buttons to roles that cannot change matches', async () => {
-    await setUp('LIVE', false);
-    expect(statusButtons()).toEqual([]);
-  });
+  for (const [role, allowed] of [
+    ['ADMIN', true],
+    ['OPERATOR', true],
+    ['VIEWER', false],
+    ['ORG', false],
+  ] as const) {
+    it(`${allowed ? 'offers' : 'offers no'} status buttons and Add Event on a live match to ${role}`, async () => {
+      await setUp('LIVE', role);
+      expect(statusButtons()).toEqual(allowed ? ['Finish Match', 'Cancel Match'] : []);
+      expect(!!element.querySelector('app-match-event-form')).toBe(allowed);
+    });
+  }
 
   it('says when the match does not exist', async () => {
     await setUp('LIVE');
@@ -169,12 +186,88 @@ describe('MatchDetailPage', () => {
     fixture.componentRef.setInput('matchId', 'gone');
     await settle();
     expect(element.querySelector('.match-detail__missing')?.textContent).toContain("doesn't exist");
+    expect(element.querySelector('.match-detail__error')).toBeNull();
+    expect(element.querySelector('app-match-header')).toBeNull();
   });
 
-  const timelineRows = (): string[] =>
-    Array.from(element.querySelectorAll('app-match-timeline tbody tr.data-table__row')).map(
-      (row) => row.querySelector('td')?.textContent?.trim() ?? ''
+  it('says why the match could not be loaded, with Try again in place of the header', async () => {
+    await setUp('LIVE', 'ADMIN', () =>
+      api.getMatch$.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 429 })))
     );
+    const row = element.querySelector('.match-detail__error') as HTMLElement;
+    expect(row.querySelector('span')?.textContent).toBe(RATE_LIMITED_MESSAGE);
+    expect(element.querySelector('app-match-header')).toBeNull();
+    expect(element.querySelector('.match-detail__missing')).toBeNull();
+
+    buttonWithText('Try again', row).click();
+    await settle();
+    expect(api.getMatch$).toHaveBeenCalledTimes(2);
+    expect(element.querySelector('.match-detail__error')).toBeNull();
+    expect(tag()).toBe('Live');
+    expect(statusButtons()).toEqual(['Finish Match', 'Cancel Match']);
+  });
+
+  it('says why the timeline could not be loaded, and loads it again on Try again', async () => {
+    await setUp('LIVE', 'ADMIN', () =>
+      api.getTimeline$.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 403 })))
+    );
+    const section = element.querySelector('[aria-labelledby="match-timeline-title"]') as HTMLElement;
+    expect(section.querySelector('.data-table__empty')?.textContent).toBe(FORBIDDEN_LOAD_MESSAGE);
+    expect(timelineRows()).toEqual([]);
+
+    buttonWithText('Try again', section).click();
+    await settle();
+    expect(timelineRows()).toEqual(["12'"]);
+    expect(buttonWithText('Try again', section)).toBeUndefined();
+  });
+
+  it('says why the stats could not be loaded', async () => {
+    await setUp('LIVE', 'ADMIN', () =>
+      api.getStats$.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 429 })))
+    );
+    expect(element.querySelector('app-match-stats .match-stats__empty')?.textContent).toBe(RATE_LIMITED_MESSAGE);
+    expect(element.querySelector('app-match-stats table')).toBeNull();
+
+    const section = element.querySelector('[aria-labelledby="match-stats-title"]') as HTMLElement;
+    buttonWithText('Try again', section).click();
+    await settle();
+    expect(api.getStats$).toHaveBeenCalledTimes(2);
+    expect(element.querySelector('app-match-stats table')).not.toBeNull();
+    expect(buttonWithText('Try again', section)).toBeUndefined();
+  });
+
+  it('says so when the stats cannot be refreshed after a live event, and keeps them', async () => {
+    await setUp('LIVE');
+    api.getStats$.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 429 })));
+    live.updates.next({ kind: 'event', event: matchEvent('e2', 5, { teamId: AWAY.id }) });
+    await settle();
+
+    const section = element.querySelector('[aria-labelledby="match-stats-title"]') as HTMLElement;
+    expect(section.querySelector('.match-detail__error')?.textContent).toBe(RATE_LIMITED_MESSAGE);
+    expect(section.querySelector('app-match-stats table')).not.toBeNull();
+
+    buttonWithText('Try again', section).click();
+    await settle();
+    expect(section.querySelector('.match-detail__error')).toBeNull();
+    expect(buttonWithText('Try again', section)).toBeUndefined();
+  });
+
+  it('says so when the match cannot be refreshed after its status changed, and keeps the old status', async () => {
+    await setUp('LIVE');
+    current = match('m1', 'FINISHED');
+    api.getMatch$.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 403 })));
+    live.updates.next({ kind: 'status', status: 'FINISHED' });
+    await settle();
+
+    const row = element.querySelector('.match-detail__error') as HTMLElement;
+    expect(row.querySelector('span')?.textContent).toBe(FORBIDDEN_LOAD_MESSAGE);
+    expect(tag()).toBe('Live');
+
+    buttonWithText('Try again', row).click();
+    await settle();
+    expect(element.querySelector('.match-detail__error')).toBeNull();
+    expect(tag()).toBe('Finished');
+  });
 
   it('follows the match live while the page is open, and stops when it closes', async () => {
     await setUp('LIVE');
@@ -227,12 +320,8 @@ describe('MatchDetailPage', () => {
     expect(element.querySelector('app-match-event-form')).toBeNull();
   });
 
-  it('shows the event panel only on a live match and only to roles that can change matches', async () => {
+  it('shows the event panel only on a live match', async () => {
     await setUp('SCHEDULED');
-    expect(element.querySelector('app-match-event-form')).toBeNull();
-    fixture.destroy();
-    TestBed.resetTestingModule();
-    await setUp('LIVE', false);
     expect(element.querySelector('app-match-event-form')).toBeNull();
   });
 

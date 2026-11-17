@@ -16,13 +16,12 @@ import { Breadcrumb, BreadcrumbsComponent } from '../../common/components/breadc
 import { ButtonComponent } from '../../common/components/button/button.component';
 import { DialogComponent } from '../../common/components/dialog/dialog.component';
 import { describeHttpError } from '../../common/utils/http-error.util';
-import { createReloadable } from '../../common/utils/reloadable.util';
+import { createReloadable, firstLoadError, refreshError } from '../../common/utils/reloadable.util';
 import { AuthService } from '../../core/auth/services/auth.service';
 import { MatchEventFormComponent } from '../components/match-event-form/match-event-form.component';
 import { MatchHeaderComponent, MatchScore } from '../components/match-header/match-header.component';
 import { MatchStatsComponent } from '../components/match-stats/match-stats.component';
 import { MatchTimelineComponent } from '../components/match-timeline/match-timeline.component';
-import { MATCH_EDITOR_ROLES } from '../constants/matches.constants';
 import { MatchEvent, MatchLiveUpdate, NewMatchEvent } from '../models/match-event.model';
 import { MatchLiveService } from '../services/match-live.service';
 import { MatchesApiService } from '../services/matches-api.service';
@@ -79,8 +78,20 @@ export class MatchDetailPage {
   readonly events = linkedSignal<readonly MatchEvent[]>(() => this.timeline.value() ?? []);
   readonly latestScoreboard = linkedSignal(() => this.scoreboard.value());
 
-  readonly canEdit = computed(() => this.authService.hasAnyRole(MATCH_EDITOR_ROLES));
+  readonly canEdit = computed(() => this.authService.can('manageMatches'));
   readonly notFound = computed(() => !this.match.value() && this.match.errorStatus() === 404);
+  readonly loadError = computed(() => firstLoadError(this.match, "Couldn't load this match. Please try again."));
+  // Shown in place of a section's content when its first load failed.
+  readonly timelineError = computed(() => firstLoadError(this.timeline, 'The timeline could not be loaded.'));
+  readonly statsError = computed(() => firstLoadError(this.stats, 'The stats could not be loaded.'));
+  // A failed refresh of the match (after a status change or a live status message) or of the stats (after a new event):
+  // what is shown may be out of date.
+  readonly matchRefreshError = computed(() =>
+    refreshError(this.match, "Couldn't refresh the match, so its status may be out of date. Please try again.")
+  );
+  readonly statsRefreshError = computed(() =>
+    refreshError(this.stats, "Couldn't refresh the stats, so they may be out of date. Please try again.")
+  );
   readonly title = computed(() => {
     const match = this.match.value();
     return match ? matchTitle(match) : '';

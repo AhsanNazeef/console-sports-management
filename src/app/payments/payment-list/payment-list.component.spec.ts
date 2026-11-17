@@ -1,14 +1,25 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { Component, signal, Type } from '@angular/core';
+import { HttpClient, HttpErrorResponse, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component, Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, TitleStrategy } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { firstValueFrom, NEVER, Observable, of, Subject, throwError } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { authServiceAs } from '../../../testing/auth.fixtures';
+import { UserRole } from '../../auth/models/auth.model';
 import { ShellComponent } from '../../common/components/shell/shell.component';
+import {
+  FORBIDDEN_CHANGE_MESSAGE,
+  FORBIDDEN_LOAD_MESSAGE,
+  FORBIDDEN_MESSAGE,
+  RATE_LIMITED_MESSAGE,
+} from '../../common/constants/http.constants';
 import { ApiListResponse } from '../../common/models/api.model';
 import { SearchService } from '../../common/services/search.service';
 import { ViewportService } from '../../common/services/viewport.service';
 import { AuthService } from '../../core/auth/services/auth.service';
+import { httpNoticeInterceptor } from '../../core/http/http-notice.interceptor';
 import { PageTitleService } from '../../core/page-title.service';
 import { DEFAULT_TRANSACTION_QUERY } from '../constants/payments.constants';
 import { PaymentStatus, PaymentSummary, Transaction, TransactionQuery } from '../models/payment.model';
@@ -40,7 +51,7 @@ describe('PaymentListPage', () => {
   };
 
   // configure runs before the page loads, to change what the backend answers.
-  async function setUp(url = '/payments', role = 'ADMIN', configure?: () => void): Promise<void> {
+  async function setUp(url = '/payments', role: UserRole = 'ADMIN', configure?: () => void): Promise<void> {
     rows = [transaction('1', 'PENDING'), transaction('2', 'COMPLETED')];
     total = 23;
     let pendingUsd = 4;
@@ -62,7 +73,7 @@ describe('PaymentListPage', () => {
       providers: [
         provideRouter([{ path: 'payments', component: PaymentListPage }]),
         { provide: PaymentsApiService, useValue: api },
-        { provide: AuthService, useValue: { hasAnyRole: (roles: readonly string[]) => roles.includes(role) } },
+        { provide: AuthService, useValue: authServiceAs(role) },
       ],
     });
     configure?.();
@@ -174,6 +185,16 @@ describe('PaymentListPage', () => {
       await settle(harness);
       expect(element.querySelector('.payment-list__error')).toBeNull();
       expect(cards()[0].detail).toBe('8 payments');
+    });
+
+    it('says when the totals were rate-limited', async () => {
+      await setUp('/payments', 'ADMIN', () =>
+        api.getSummary$.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 429 })))
+      );
+      const rows = element.querySelectorAll('.payment-list__error');
+      expect(rows.length).toBe(1);
+      expect(rows[0].querySelector('span')?.textContent).toBe(RATE_LIMITED_MESSAGE);
+      expect(element.querySelector('app-data-table')).not.toBeNull();
     });
 
     it('says why there are no currencies to choose yet', async () => {
@@ -348,6 +369,16 @@ describe('PaymentListPage', () => {
       expect(statusOfRow(0)).toBe('Pending');
     });
 
+    it('says when the account may not see the transactions', async () => {
+      await setUp('/payments', 'ADMIN', () =>
+        api.getTransactions$.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })))
+      );
+      const rows = element.querySelectorAll('.payment-list__error');
+      expect(rows.length).toBe(1);
+      expect(rows[0].querySelector('span')?.textContent).toBe(FORBIDDEN_LOAD_MESSAGE);
+      expect(element.querySelector('app-data-table')).toBeNull();
+    });
+
     it('shows a status it doesn’t know as the backend sent it', async () => {
       await setUp('/payments', 'ADMIN', () => (rows = [transaction('3', 'CHARGEBACK' as PaymentStatus)]));
       const tag = element.querySelector('tbody tr app-status-tag span');
@@ -384,6 +415,26 @@ describe('PaymentListPage', () => {
       expect(popup()?.textContent).toContain('This transaction no longer exists.');
       expect(element.querySelector('#transaction-new-status')).toBeNull();
       expect(api.getTransactions$).toHaveBeenCalledTimes(2);
+    });
+
+    it('says when loading the latest copy was rate-limited, on opening and after a change', async () => {
+      await setUp();
+      const error = (): string | undefined => popup()?.querySelector('.transaction-detail__error')?.textContent;
+      api.getTransaction$.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 429 })));
+      await openTransaction();
+      expect(error()).toBe(RATE_LIMITED_MESSAGE);
+      expect(element.querySelector('#transaction-new-status')).not.toBeNull();
+
+      buttonWithText('Close', popup()!).click();
+      await settle(harness);
+      await openTransaction();
+      api.getTransaction$.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 429 })));
+      await askFor('COMPLETED');
+      buttonWithText('Change Status', confirmation()!).click();
+      await settle(harness);
+      expect(api.changeStatus$).toHaveBeenCalledWith('1', 'COMPLETED');
+      expect(error()).toBe(`The status was changed, but the new copy couldn't be loaded. ${RATE_LIMITED_MESSAGE}`);
+      expect(element.querySelector('#transaction-new-status')).toBeNull();
     });
 
     it('changes a status after an explicit confirmation, then reads the transaction again', async () => {
@@ -610,11 +661,7 @@ describe('PaymentListPage in the console layout', () => {
         { provide: TitleStrategy, useExisting: PageTitleService },
         {
           provide: AuthService,
-          useValue: {
-            currentUser: signal({ id: 'u1', email: 'admin@buzzer.dev', role: 'ADMIN' }),
-            signOut: vi.fn(),
-            hasAnyRole: () => true,
-          },
+          useValue: { ...authServiceAs('ADMIN'), signOut: vi.fn(), reloadAccess$: () => of(undefined) },
         },
         { provide: ViewportService, useValue: { isPhone$: of(false), isTablet$: of(false) } },
         {
@@ -630,7 +677,7 @@ describe('PaymentListPage in the console layout', () => {
     });
   });
 
-  // Leaving Payments with a search, for a page whose code is still downloading, used to be cancelled.
+  // The next page's code is still downloading when the search is cleared.
   it('reaches the next page when leaving with a search', async () => {
     const harness = await RouterTestingHarness.create('/payments?search=foo');
     await settle(harness, 400);
@@ -651,5 +698,79 @@ describe('PaymentListPage in the console layout', () => {
     await settle(harness, 1000);
     expect(await navigation).toBe(true);
     expect(router.url).toBe('/sports');
+  });
+});
+
+describe('PaymentListPage in the console layout, over HTTP', () => {
+  const baseUrl = `${environment.apiBaseUrl}/payments`;
+  let harness: RouterTestingHarness;
+  let http: HttpTestingController;
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([
+          { path: '', component: ShellComponent, children: [{ path: 'payments', component: PaymentListPage }] },
+        ]),
+        provideHttpClient(withInterceptors([httpNoticeInterceptor])),
+        provideHttpClientTesting(),
+        { provide: TitleStrategy, useExisting: PageTitleService },
+        {
+          provide: AuthService,
+          useValue: { ...authServiceAs('ADMIN'), signOut: vi.fn(), reloadAccess$: () => of(undefined) },
+        },
+        { provide: ViewportService, useValue: { isPhone$: of(false), isTablet$: of(false) } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    harness = await RouterTestingHarness.create('/payments');
+    await settle(harness);
+    http.expectOne(`${baseUrl}/summary`).flush({ success: true, data: summary() });
+    http.expectOne((request) => request.url === `${baseUrl}/transactions`).flush(page([transaction('1')], 1));
+    await settle(harness);
+  });
+
+  afterEach(() => http.verify());
+
+  const buttonWithText = (text: string, root: ParentNode = document): HTMLButtonElement =>
+    Array.from(root.querySelectorAll('button')).find((button) => button.textContent?.trim() === text)!;
+  const alerts = (): string[] =>
+    Array.from(document.querySelectorAll('[role="alert"]')).map((alert) => alert.textContent?.trim() ?? '');
+
+  it('shows a refused or rate-limited status change once, in the confirmation', async () => {
+    buttonWithText('TXN-1').click();
+    await settle(harness);
+    http.expectOne(`${baseUrl}/transactions/1`).flush({ success: true, data: transaction('1') });
+    await settle(harness);
+    const newStatus = document.querySelector('#transaction-new-status') as HTMLSelectElement;
+    newStatus.value = 'COMPLETED';
+    newStatus.dispatchEvent(new Event('change'));
+    harness.fixture.detectChanges();
+    buttonWithText('Change Status', document.querySelector('.transaction-detail')!).click();
+    await settle(harness);
+
+    for (const [status, message] of [
+      [403, FORBIDDEN_CHANGE_MESSAGE],
+      [429, RATE_LIMITED_MESSAGE],
+    ] as const) {
+      buttonWithText('Change Status', document.querySelector('.dialog')!).click();
+      await settle(harness);
+      const change = http.expectOne(`${baseUrl}/transactions/1/status`);
+      expect(change.request.method).toBe('PATCH');
+      expect(change.request.body).toEqual({ status: 'COMPLETED' });
+      change.flush({ success: false, error: { message: 'Request refused' } }, { status, statusText: 'Error' });
+      await settle(harness);
+      expect(alerts()).toEqual([message]);
+      expect(document.querySelector('.dialog [role="alert"]')).not.toBeNull();
+      expect(document.querySelector('.shell__notice')).toBeNull();
+    }
+
+    // A refused request that no page shows itself still gets the console-wide notice in this layout.
+    TestBed.inject(HttpClient)
+      .get(`${environment.apiBaseUrl}/users`)
+      .subscribe({ error: () => undefined });
+    http.expectOne(`${environment.apiBaseUrl}/users`).flush(null, { status: 403, statusText: 'Forbidden' });
+    await settle(harness);
+    expect(document.querySelector('.shell__notice')?.textContent).toContain(FORBIDDEN_MESSAGE);
   });
 });

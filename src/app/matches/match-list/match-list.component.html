@@ -10,7 +10,7 @@
 
   @if (list.failed()) {
     <div class="match-list__error" role="alert">
-      <span>Couldn't load the matches. Please try again.</span>
+      <span>{{ listError() }}</span>
       <app-button variant="outline" size="small" (clicked)="list.reload()">Try again</app-button>
     </div>
   }

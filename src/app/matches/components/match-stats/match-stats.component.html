@@ -27,8 +27,8 @@
         }
       </tbody>
     </table>
-  } @else if (failed()) {
-    <p class="match-stats__empty">The stats could not be loaded.</p>
+  } @else if (error(); as message) {
+    <p class="match-stats__empty">{{ message }}</p>
   } @else {
     @for (row of [1, 2, 3]; track row) {
       <div class="match-stats__skeleton" aria-hidden="true">

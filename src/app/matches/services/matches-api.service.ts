@@ -1,11 +1,17 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SKIP_HTTP_NOTICE } from '../../common/constants/http.constants';
 import { ApiListResponse, ApiResponse } from '../../common/models/api.model';
 import { MATCH_OPTIONS_LIMIT, MatchStatusTarget } from '../constants/matches.constants';
 import { MatchEvent, MatchPlayer, MatchScoreboard, MatchStats, NewMatchEvent } from '../models/match-event.model';
 import { Match, MatchChanges, MatchQuery, MatchSport, MatchTeam, NewMatch } from '../models/match.model';
+
+// For the requests whose errors the Matches pages and popups show themselves. The scoreboard and the players have no
+// message of their own (the match record's score and the event form stand in), so the console-wide notice explains
+// their 403 or 429.
+const INLINE_ERRORS = new HttpContext().set(SKIP_HTTP_NOTICE, true);
 
 @Injectable({ providedIn: 'root' })
 export class MatchesApiService {
@@ -26,44 +32,52 @@ export class MatchesApiService {
     if (query.search) {
       params = params.set('search', query.search);
     }
-    return this.http.get<ApiListResponse<Match>>(this.baseUrl, { params });
+    return this.http.get<ApiListResponse<Match>>(this.baseUrl, { params, context: INLINE_ERRORS });
   }
 
   createMatch$(input: NewMatch): Observable<Match> {
-    return this.http.post<ApiResponse<Match>>(this.baseUrl, input).pipe(map((response) => response.data));
+    return this.http
+      .post<ApiResponse<Match>>(this.baseUrl, input, { context: INLINE_ERRORS })
+      .pipe(map((response) => response.data));
   }
 
   updateMatch$(id: string, changes: MatchChanges): Observable<Match> {
-    return this.http.patch<ApiResponse<Match>>(`${this.baseUrl}/${id}`, changes).pipe(map((response) => response.data));
+    return this.http
+      .patch<ApiResponse<Match>>(`${this.baseUrl}/${id}`, changes, { context: INLINE_ERRORS })
+      .pipe(map((response) => response.data));
   }
 
   getMatch$(id: string): Observable<Match> {
-    return this.http.get<ApiResponse<Match>>(`${this.baseUrl}/${id}`).pipe(map((response) => response.data));
+    return this.http
+      .get<ApiResponse<Match>>(`${this.baseUrl}/${id}`, { context: INLINE_ERRORS })
+      .pipe(map((response) => response.data));
   }
 
   // The backend refuses (400) any move its status rules don't allow.
   changeStatus$(id: string, status: MatchStatusTarget): Observable<Match> {
     return this.http
-      .patch<ApiResponse<Match>>(`${this.baseUrl}/${id}/status`, { status })
+      .patch<ApiResponse<Match>>(`${this.baseUrl}/${id}/status`, { status }, { context: INLINE_ERRORS })
       .pipe(map((response) => response.data));
   }
 
   // Events in match order.
   getTimeline$(id: string): Observable<MatchEvent[]> {
     return this.http
-      .get<ApiResponse<MatchEvent[]>>(`${this.baseUrl}/${id}/timeline`)
+      .get<ApiResponse<MatchEvent[]>>(`${this.baseUrl}/${id}/timeline`, { context: INLINE_ERRORS })
       .pipe(map((response) => response.data));
   }
 
   // Only a LIVE match takes events; the backend answers 400 otherwise.
   addEvent$(id: string, input: NewMatchEvent): Observable<MatchEvent> {
     return this.http
-      .post<ApiResponse<MatchEvent>>(`${this.baseUrl}/${id}/events`, input)
+      .post<ApiResponse<MatchEvent>>(`${this.baseUrl}/${id}/events`, input, { context: INLINE_ERRORS })
       .pipe(map((response) => response.data));
   }
 
   getStats$(id: string): Observable<MatchStats> {
-    return this.http.get<ApiResponse<MatchStats>>(`${this.baseUrl}/${id}/stats`).pipe(map((response) => response.data));
+    return this.http
+      .get<ApiResponse<MatchStats>>(`${this.baseUrl}/${id}/stats`, { context: INLINE_ERRORS })
+      .pipe(map((response) => response.data));
   }
 
   getScoreboard$(id: string): Observable<MatchScoreboard> {
@@ -74,14 +88,14 @@ export class MatchesApiService {
 
   // Soft delete: the match leaves every list.
   deleteMatch$(id: string): Observable<void> {
-    return this.http.delete(`${this.baseUrl}/${id}`).pipe(map(() => undefined));
+    return this.http.delete(`${this.baseUrl}/${id}`, { context: INLINE_ERRORS }).pipe(map(() => undefined));
   }
 
   // Every sport, A–Z, for the Schedule Match popup.
   getSportOptions$(): Observable<MatchSport[]> {
     const params = this.optionParams();
     return this.http
-      .get<ApiListResponse<MatchSport>>(`${this.organizationsUrl}/sports`, { params })
+      .get<ApiListResponse<MatchSport>>(`${this.organizationsUrl}/sports`, { params, context: INLINE_ERRORS })
       .pipe(map((response) => response.data));
   }
 
@@ -89,7 +103,7 @@ export class MatchesApiService {
   getTeams$(sportId: string): Observable<MatchTeam[]> {
     const params = this.optionParams().set('sportId', sportId);
     return this.http
-      .get<ApiListResponse<MatchTeam>>(`${this.organizationsUrl}/teams`, { params })
+      .get<ApiListResponse<MatchTeam>>(`${this.organizationsUrl}/teams`, { params, context: INLINE_ERRORS })
       .pipe(map((response) => response.data));
   }
 

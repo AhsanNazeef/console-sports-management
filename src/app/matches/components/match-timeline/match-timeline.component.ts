@@ -30,7 +30,8 @@ export class MatchTimelineComponent {
   readonly teams = input<readonly MatchTeam[]>([]);
   readonly players = input<readonly MatchPlayer[]>([]);
   readonly loading = input(false);
-  readonly failed = input(false);
+  // Why the events couldn't be loaded, shown in place of the table's rows.
+  readonly error = input<string | null>(null);
 
   readonly columns: DataTableColumn[] = [
     { key: 'minute', label: 'Minute', width: '64px' },
@@ -54,7 +55,7 @@ export class MatchTimelineComponent {
     }));
   });
 
-  readonly emptyMessage = computed(() => (this.failed() ? 'The timeline could not be loaded.' : 'No events yet.'));
+  readonly emptyMessage = computed(() => this.error() ?? 'No events yet.');
 }
 
 function fullName(player: Pick<MatchPlayer, 'firstName' | 'lastName'>): string {

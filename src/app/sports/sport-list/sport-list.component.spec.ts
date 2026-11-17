@@ -2,6 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable, of, Subject, throwError } from 'rxjs';
+import { authServiceAs } from '../../../testing/auth.fixtures';
+import { UserRole } from '../../auth/models/auth.model';
+import { FORBIDDEN_LOAD_MESSAGE, RATE_LIMITED_MESSAGE } from '../../common/constants/http.constants';
 import { ApiListResponse } from '../../common/models/api.model';
 import { SearchService } from '../../common/services/search.service';
 import { AuthService } from '../../core/auth/services/auth.service';
@@ -45,7 +48,7 @@ describe('SportListPage', () => {
   };
 
   // `adjustApi` can swap fake responses before the page is created (for example, requests that never answer).
-  async function setUp(canEdit = true, adjustApi?: () => void): Promise<void> {
+  async function setUp(role: UserRole = 'ADMIN', adjustApi?: () => void): Promise<void> {
     api = {
       getSports$: vi.fn(() => of(page([sport('a', 'Hockey'), sport('b', 'Boxing')], 12))),
       getCatalogueTotals$: vi.fn(() => of({ sports: 12, governingBodies: 27, organisations: 29, participants: 39 })),
@@ -68,7 +71,7 @@ describe('SportListPage', () => {
         provideRouter([]),
         { provide: SportsApiService, useValue: api },
         { provide: SportImportService, useValue: sportImport },
-        { provide: AuthService, useValue: { hasAnyRole: () => canEdit } },
+        { provide: AuthService, useValue: authServiceAs(role) },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(SportListPage);
@@ -100,7 +103,7 @@ describe('SportListPage', () => {
   it('shows skeletons for the totals and the table until the first data arrives', async () => {
     const totals$ = new Subject<CatalogueTotals>();
     const sports$ = new Subject<ApiListResponse<Sport>>();
-    await setUp(true, () => {
+    await setUp('ADMIN', () => {
       api.getCatalogueTotals$.mockReturnValue(totals$);
       api.getSports$.mockReturnValue(sports$);
     });
@@ -142,12 +145,20 @@ describe('SportListPage', () => {
     }
   });
 
-  it('hides adding, editing and deleting from roles that cannot change sports', async () => {
-    await setUp(false);
-    expect(buttonWithText('Add Sport')).toBeUndefined();
-    expect(buttonWithText('Import')).toBeUndefined();
-    expect(element.querySelector('.sports-table__action')).toBeNull();
-  });
+  for (const [role, allowed] of [
+    ['ADMIN', true],
+    ['OPERATOR', true],
+    ['VIEWER', false],
+    ['ORG', false],
+  ] as const) {
+    it(`${allowed ? 'offers' : 'offers no'} adding, importing, editing and deleting to ${role}`, async () => {
+      await setUp(role);
+      expect(!!buttonWithText('Add Sport')).toBe(allowed);
+      expect(!!buttonWithText('Import')).toBe(allowed);
+      expect(!!element.querySelector('[aria-label="Edit Hockey"]')).toBe(allowed);
+      expect(!!element.querySelector('[aria-label="Delete Boxing"]')).toBe(allowed);
+    });
+  }
 
   it('imports the rows of a chosen file, then reloads the list and the totals', async () => {
     await setUp();
@@ -251,4 +262,15 @@ describe('SportListPage', () => {
     await settle();
     expect(element.querySelector('.sport-list__error')).toBeNull();
   });
+
+  for (const [status, message] of [
+    [429, RATE_LIMITED_MESSAGE],
+    [403, FORBIDDEN_LOAD_MESSAGE],
+  ] as const) {
+    it(`explains a ${status} on the list`, async () => {
+      await setUp('ADMIN', () => api.getSports$.mockReturnValue(throwError(() => new HttpErrorResponse({ status }))));
+      expect(element.querySelector('.sport-list__error > span')?.textContent).toBe(message);
+      expect(element.querySelector('.sports-table__empty')?.textContent).toBe('Sports could not be loaded.');
+    });
+  }
 });
